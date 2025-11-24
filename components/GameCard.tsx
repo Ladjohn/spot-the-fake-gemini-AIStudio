@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NewsItem } from '../types';
 import { speakText } from '../services/audioService';
-import { generateAiImage } from '../services/geminiService';
 import { ICONS } from '../constants';
 
 interface GameCardProps {
