@@ -20,6 +20,7 @@ async function fetchWithTimeout(url: string, opts: RequestInit = {}, timeoutMs =
 
 // safe parse for arrays (tries to extract JSON when LLM adds surrounding text)
 function safeParseArray(raw: string): any[] | null {
+  if (!raw || typeof raw !== 'string') return null
   try {
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed)) return parsed
@@ -60,8 +61,7 @@ async function askLLM(payload: any) {
 }
 
 export async function generateQuizRound(difficulty: Difficulty, count = 1): Promise<NewsItem[]> {
-  const systemPrompt = `You will return ONLY a JSON array of items.`
-
+  const systemPrompt = `You will return ONLY a JSON array of items. No commentary, no extra text.`
   const userPrompt = `Create ${count} news items in strict JSON array format. Each item must have: headline, summary, type ("REAL" or "FAKE"). Difficulty: ${difficulty}. Return ONLY the JSON array.`
 
   const payload = {
@@ -75,6 +75,7 @@ export async function generateQuizRound(difficulty: Difficulty, count = 1): Prom
   }
 
   const raw = await askLLM(payload)
+  console.log('LLM raw response (generateQuizRound):', raw)
 
   // If askLLM returned an object (parsed JSON) from proxy -> try choices path first
   if (typeof raw === 'object' && raw.choices) {
@@ -92,6 +93,8 @@ export async function generateQuizRound(difficulty: Difficulty, count = 1): Prom
         imagePrompt: it.imagePrompt ?? '',
         imageUrl: it.imageUrl ?? ''
       }))
+    } else {
+      console.error('Could not parse choices.content as array:', text)
     }
   }
 
@@ -110,10 +113,12 @@ export async function generateQuizRound(difficulty: Difficulty, count = 1): Prom
         imagePrompt: it.imagePrompt ?? '',
         imageUrl: it.imageUrl ?? ''
       }))
+    } else {
+      console.error('Could not parse raw string response into array:', raw)
     }
   }
 
-  // fallback single stub item
+  // fallback single stub item (safe, prevents blank UI)
   return [
     {
       id: `fallback-${difficulty}`,
@@ -138,7 +143,7 @@ export async function preloadRound(difficulty: Difficulty, count = 1): Promise<v
     const items = await generateQuizRound(difficulty, count)
     _preloadCache[key] = items
   } catch (e) {
-    // swallow
+    console.warn('preloadRound failed', e)
   }
 }
 
@@ -152,7 +157,6 @@ export async function analyzeAuthenticity(item: NewsItem): Promise<VerificationR
   }
 
   const raw = await askLLM(payload)
-  // try parse similarly to generateQuizRound
   let candidate: any = null
   if (typeof raw === 'object' && raw.choices) {
     candidate = raw.choices?.[0]?.message?.content ?? null
@@ -171,6 +175,7 @@ export async function analyzeAuthenticity(item: NewsItem): Promise<VerificationR
       visualArtifacts: parsed?.visualArtifacts ?? []
     }
   } catch (e) {
+    console.error('analyzeAuthenticity parse failed:', e, candidate)
     return {
       authenticityScore: 50,
       verdict: 'UNCERTAIN',
