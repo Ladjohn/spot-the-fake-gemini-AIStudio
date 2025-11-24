@@ -134,7 +134,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({ item, userGuess, onClose,
               onClick={handleNext}
               className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-xl rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors shadow-neo dark:shadow-neo-dark active:shadow-none active:translate-x-1 active:translate-y-1"
             >
-              Next Round ->
+              Next Round {'->'}
             </button>
         </div>
       </div>
