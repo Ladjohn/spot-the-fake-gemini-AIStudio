@@ -1,0 +1,5 @@
+{
+  "name": "Spot-the-Fake: Viral News Edition",
+  "description": "A high-speed, AI-powered quiz game where you challenge your media literacy against viral news, powered by Gemini 3 Pro.",
+  "requestFramePermissions": []
+}
