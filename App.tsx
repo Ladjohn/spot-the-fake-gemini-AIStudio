@@ -300,7 +300,7 @@ const App: React.FC = () => {
                         className="w-full py-4 bg-white dark:bg-zinc-800 text-black dark:text-white font-black rounded-lg border-4 border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)] transition-all uppercase tracking-widest flex justify-between px-6 group"
                     >
                         <span>{diff}</span>
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">-></span>
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">{'->'}</span>
                     </button>
                 ))}
             </div>
