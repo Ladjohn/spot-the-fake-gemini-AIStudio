@@ -121,35 +121,68 @@ const App: React.FC = () => {
     }
   }, [musicEnabled, gameState.status]);
 
+  // --- Self-heal: if PLAYING but no quizItems, fetch a round automatically ---
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refillIfEmpty() {
+      try {
+        console.log('Self-heal check: status=', gameState.status, 'quizItems.length=', quizItems.length);
+        if (gameState.status === 'PLAYING' && quizItems.length === 0) {
+          setLoading(true);
+          console.warn('No quiz items while PLAYING — fetching fallback round for', gameState.difficulty);
+          // ask for a small batch; use 5 as safe count
+          const items = await generateQuizRound(gameState.difficulty, 5);
+          if (cancelled) return;
+          console.log('Self-heal received items:', items);
+          if (Array.isArray(items) && items.length > 0) {
+            setQuizItems(items);
+            setCurrentIndex(0);
+          } else {
+            console.error('Self-heal: generator returned empty:', items);
+          }
+        }
+      } catch (err) {
+        console.error('Self-heal fetch failed', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    refillIfEmpty();
+    return () => { cancelled = true; };
+  }, [gameState.status, gameState.difficulty, quizItems.length]);
+
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
-  playSound('CLICK');
-  setLoading(true);
-  setGameState(prev => ({
-    ...prev,
-    currentRound: 1,
-    totalRoundsPlayed: 0,
-    score: 0,
-    streak: 0,
-    lives: GAME_CONFIG.MAX_LIVES,
-    history: [],
-    status: 'PLAYING',
-    difficulty: difficulty
-  }));
-  try {
-    console.log('startGame: requested difficulty=', difficulty, 'count=10');
-    const items = await generateQuizRound(difficulty, 10);
-    console.log('startGame: received items:', items);
-    setQuizItems(items);
-    setCurrentIndex(0);
-  } catch (e) {
-    console.error("Error starting game", e);
-  } finally {
-    setLoading(false);
-  }
-};
+    playSound('CLICK');
+    setLoading(true);
+    setGameState(prev => ({
+      ...prev,
+      currentRound: 1,
+      totalRoundsPlayed: 0,
+      score: 0,
+      streak: 0,
+      lives: GAME_CONFIG.MAX_LIVES,
+      history: [],
+      status: 'PLAYING',
+      difficulty: difficulty
+    }));
+    try {
+      console.log('startGame: requested difficulty=', difficulty, 'count=10');
+      const items = await generateQuizRound(difficulty, 10);
+      console.log('startGame: received items:', items);
+      setQuizItems(items);
+      setCurrentIndex(0);
+    } catch (e) {
+      console.error("Error starting game", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
     const currentItem = quizItems[currentIndex];
+    if (!currentItem) return;
     const isCorrect = vote === currentItem.type.toUpperCase();
     
     setLastGuess(vote);
@@ -192,25 +225,23 @@ const App: React.FC = () => {
      if (currentIndex < quizItems.length - 1) {
        setCurrentIndex(prev => prev + 1);
        setGameState(prev => ({ ...prev, status: 'PLAYING' }));
-   } else {
-  setLoading(true);
-  try {
-    console.log('nextQuestion: requesting difficulty=', gameState.difficulty, 'count=5');
-    const nextItems = await generateQuizRound(gameState.difficulty, 5);
-    console.log('nextQuestion: received nextItems:', nextItems);
-    setQuizItems(nextItems);
-    setCurrentIndex(0);
-    setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1, status: 'PLAYING' }));
-  } catch (e) {
-    console.error('nextQuestion failed', e);
-    setGameState(prev => ({...prev, status: 'COMPLETED'}));
-  } finally {
-    setLoading(false);
-  }
-}
-
+     } else {
+       setLoading(true);
+       try {
+         console.log('nextQuestion: requesting difficulty=', gameState.difficulty, 'count=5');
+         const nextItems = await generateQuizRound(gameState.difficulty, 5);
+         console.log('nextQuestion: received nextItems:', nextItems);
+         setQuizItems(nextItems);
+         setCurrentIndex(0);
+         setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1, status: 'PLAYING' }));
+       } catch (e) {
+         console.error('nextQuestion failed', e);
+         setGameState(prev => ({...prev, status: 'COMPLETED'}));
+       } finally {
+         setLoading(false);
+       }
+     }
   }, [currentIndex, quizItems.length, gameState.totalRoundsPlayed, gameState.difficulty]);
-
 
   const handleSkip = useCallback(() => {
     if (navigator.vibrate) navigator.vibrate(10);
@@ -320,7 +351,8 @@ const App: React.FC = () => {
     const isWin = gameState.status === 'COMPLETED';
     return (
         <div className={`min-h-screen ${isWin ? 'bg-g-green' : 'bg-g-red'} flex items-center justify-center p-4 relative`}>
-            {/* Toast Notification */}
+
+
             {showToast && (
                 <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-3 rounded-full font-bold shadow-lg animate-bounce z-50 whitespace-nowrap">
                    📋 Score copied to clipboard!
@@ -419,7 +451,7 @@ const App: React.FC = () => {
         <div className="absolute top-20 left-10 w-32 h-32 bg-g-blue rounded-full opacity-20 blur-3xl animate-bounce-slight delay-700"></div>
         <div className="absolute bottom-20 right-10 w-40 h-40 bg-g-red rounded-full opacity-20 blur-3xl animate-bounce-slight"></div>
 
-        {currentItem && (
+        {currentItem ? (
             <div className="w-full flex flex-col items-center animate-slide-in">
                  
                  <div className="w-full max-w-md mb-4 flex justify-between items-center px-2">
@@ -454,6 +486,54 @@ const App: React.FC = () => {
                     />
                  </div>
             </div>
+        ) : (
+          <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 border-4 border-black rounded-xl text-center">
+            <h2 className="text-2xl font-black mb-2">No questions available</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              The game failed to load a question. This can happen if the AI response was empty. Try retrying — we'll request a new round.
+            </p>
+
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={async () => {
+                  playSound('CLICK');
+                  setLoading(true);
+                  try {
+                    const items = await generateQuizRound(gameState.difficulty, 5);
+                    console.log('Manual retry received items:', items);
+                    if (Array.isArray(items) && items.length > 0) {
+                      setQuizItems(items);
+                      setCurrentIndex(0);
+                      setGameState(prev => ({ ...prev, status: 'PLAYING' }));
+                    } else {
+                      console.error('Manual retry returned empty', items);
+                    }
+                  } catch (err) {
+                    console.error('Manual retry failed', err);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="px-6 py-3 bg-g-blue text-white font-black rounded-lg border-4 border-black"
+              >
+                Retry Now
+              </button>
+
+              <button
+                onClick={() => {
+                  playSound('CLICK');
+                  setGameState(prev => ({ ...prev, status: 'IDLE' }));
+                }}
+                className="px-6 py-3 bg-white dark:bg-zinc-800 text-black dark:text-white font-black rounded-lg border-4 border-black"
+              >
+                Back to Menu
+              </button>
+            </div>
+
+            <div className="mt-4 text-xs text-gray-500">
+              Tip: open the browser console (F12) and paste any red errors here so I can debug further.
+            </div>
+          </div>
         )}
       </main>
 
