@@ -122,29 +122,31 @@ const App: React.FC = () => {
   }, [musicEnabled, gameState.status]);
 
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
-    playSound('CLICK');
-    setLoading(true);
-    setGameState(prev => ({
-      ...prev,
-      currentRound: 1,
-      totalRoundsPlayed: 0,
-      score: 0,
-      streak: 0,
-      lives: GAME_CONFIG.MAX_LIVES,
-      history: [],
-      status: 'PLAYING',
-      difficulty: difficulty
-    }));
-    try {
-      const items = await generateQuizRound(10, difficulty);
-      setQuizItems(items);
-      setCurrentIndex(0);
-    } catch (e) {
-      console.error("Error starting game", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  playSound('CLICK');
+  setLoading(true);
+  setGameState(prev => ({
+    ...prev,
+    currentRound: 1,
+    totalRoundsPlayed: 0,
+    score: 0,
+    streak: 0,
+    lives: GAME_CONFIG.MAX_LIVES,
+    history: [],
+    status: 'PLAYING',
+    difficulty: difficulty
+  }));
+  try {
+    console.log('startGame: requested difficulty=', difficulty, 'count=10');
+    const items = await generateQuizRound(difficulty, 10);
+    console.log('startGame: received items:', items);
+    setQuizItems(items);
+    setCurrentIndex(0);
+  } catch (e) {
+    console.error("Error starting game", e);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
     const currentItem = quizItems[currentIndex];
@@ -193,7 +195,7 @@ const App: React.FC = () => {
      } else {
        setLoading(true);
        try {
-         const nextItems = await generateQuizRound(5, gameState.difficulty);
+         const nextItems = await generateQuizRound(gameState.difficulty, 5);
          setQuizItems(nextItems);
          setCurrentIndex(0);
          setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1, status: 'PLAYING' }));
