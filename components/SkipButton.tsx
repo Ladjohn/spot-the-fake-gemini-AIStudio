@@ -1,5 +1,5 @@
-import React from 'react';
-import { ICONS } from '../constants';
+import React from "react";
+import { ICONS } from "../constants";
 
 interface SkipButtonProps {
   onSkip: () => void;
@@ -7,9 +7,26 @@ interface SkipButtonProps {
 }
 
 const SkipButton: React.FC<SkipButtonProps> = ({ onSkip, disabled }) => {
+  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();       // prevent triggering card drag
+    if (navigator.vibrate) navigator.vibrate(10);
+    if (!disabled) onSkip();
+  };
+
+  // keyboard accessibility
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSkip();
+    }
+  };
+
   return (
     <button
-      onClick={onSkip}
+      onClick={handleClick}
+      onTouchStart={handleClick}
+      onKeyDown={handleKey}
       disabled={disabled}
       className="
         flex items-center gap-2 px-4 py-2
@@ -17,11 +34,13 @@ const SkipButton: React.FC<SkipButtonProps> = ({ onSkip, disabled }) => {
         font-black uppercase tracking-wider text-sm
         border-2 border-black dark:border-white rounded-lg
         shadow-neo-hover dark:shadow-neo-hover-dark
-        active:translate-x-[1px] active:translate-y-[1px] active:shadow-none
+        active:translate-x-[2px] active:translate-y-[2px] active:shadow-none
         disabled:opacity-50 disabled:cursor-not-allowed
         transition-all
         hover:bg-gray-50 dark:hover:bg-zinc-700
+        select-none
       "
+      aria-label="Skip this question"
     >
       {ICONS.SKIP}
       <span>Skip</span>
