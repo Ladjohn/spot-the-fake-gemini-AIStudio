@@ -193,16 +193,19 @@ const App: React.FC = () => {
        setCurrentIndex(prev => prev + 1);
        setGameState(prev => ({ ...prev, status: 'PLAYING' }));
      } else {
-       setLoading(true);
-       try {
-         const nextItems = await generateQuizRound(gameState.difficulty, 5);
-         setQuizItems(nextItems);
-         setCurrentIndex(0);
-         setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1, status: 'PLAYING' }));
-       } catch (e) {
-           setGameState(prev => ({...prev, status: 'COMPLETED'}));
-       } finally {
-         setLoading(false);
+  setLoading(true);
+  try {
+    const nextItems = await generateQuizRound(5, gameState.difficulty);
+    setQuizItems(nextItems);
+    setCurrentIndex(0);
+    setGameState(prev => ({ ...prev, currentRound: prev.currentRound + 1, status: 'PLAYING' }));
+  } catch (e) {
+      setGameState(prev => ({...prev, status: 'COMPLETED'}));
+  } finally {
+    setLoading(false);
+  }
+}
+
        }
      }
   }, [currentIndex, quizItems.length, gameState.totalRoundsPlayed, gameState.difficulty]);
