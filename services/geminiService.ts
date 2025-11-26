@@ -147,39 +147,75 @@ export async function preloadRound(difficulty: Difficulty, count = 1): Promise<v
   }
 }
 
+// src/services/geminiService.ts — patch analyzeAuthenticity
 export async function analyzeAuthenticity(item: NewsItem): Promise<VerificationResult> {
-  const payload = {
-    model: DEFAULT_MODEL,
-    messages: [
-      { role: 'user', content: `Analyze this news item and return ONLY JSON: { "authenticityScore": number, "verdict": "REAL"|"FAKE"|"UNCERTAIN", "reasoning": "..." } Headline: ${item.headline} Summary: ${item.summary ?? ''}` }
-    ],
-    max_tokens: 500
-  }
-
-  const raw = await askLLM(payload)
-  let candidate: any = null
-  if (typeof raw === 'object' && raw.choices) {
-    candidate = raw.choices?.[0]?.message?.content ?? null
-  } else if (typeof raw === 'string') {
-    candidate = raw
-  }
-
-  try {
-    const parsed = typeof candidate === 'string' ? JSON.parse(candidate) : candidate
+  // Defensive guard: if item lacks core fields, return a safe UNCERTAIN object
+  if (!item?.headline || !item?.summary) {
     return {
-      authenticityScore: Number(parsed?.authenticityScore ?? 50),
-      verdict: (parsed?.verdict ?? 'UNCERTAIN') as 'REAL' | 'FAKE' | 'UNCERTAIN',
-      reasoning: parsed?.reasoning ?? String(parsed),
-      sources: parsed?.sources ?? [],
-      usedSearch: !!parsed?.usedSearch,
-      visualArtifacts: parsed?.visualArtifacts ?? []
+      authenticityScore: 0,             // numeric 0..100
+      verdict: 'UNCERTAIN',
+      reasoning: 'The headline or summary is missing, so authenticity cannot be determined.',
+      sources: [],
+      usedSearch: false,
+      visualArtifacts: []
+    };
+  }
+
+  // existing LLM call (your implementation)...
+  try {
+    const raw = await askLLM({ /* your payload */ });
+    // try to extract a JSON object in a few ways
+    let candidateText = '';
+    if (typeof raw === 'string') candidateText = raw;
+    else if (typeof raw === 'object' && raw.choices) {
+      candidateText = raw.choices?.[0]?.message?.content ?? '';
+    } else {
+      candidateText = JSON.stringify(raw);
     }
-  } catch (e) {
-    console.error('analyzeAuthenticity parse failed:', e, candidate)
+
+    // try parse
+    let parsed = null;
+    try { parsed = JSON.parse(candidateText); } catch(e) {
+      // try to extract a JSON substring
+      const a = candidateText.indexOf('{'), b = candidateText.lastIndexOf('}');
+      if (a !== -1 && b !== -1 && b > a) {
+        try { parsed = JSON.parse(candidateText.slice(a, b+1)); } catch {}
+      }
+    }
+
+    if (!parsed) {
+      console.warn('analyzeAuthenticity: could not parse response; returning UNCERTAIN', candidateText);
+      return {
+        authenticityScore: 50,
+        verdict: 'UNCERTAIN',
+        reasoning: typeof candidateText === 'string' ? candidateText.slice(0, 300) : 'No parseable response',
+        sources: [],
+        usedSearch: false,
+        visualArtifacts: []
+      }
+    }
+
+    // normalize score to 0..100
+    let rawScore = Number(parsed.authenticityScore ?? parsed.score ?? 50);
+    if (!isFinite(rawScore)) rawScore = 50;
+    // if model returned 0..1 convert (very defensive)
+    if (rawScore <= 1) rawScore = Math.round(rawScore * 100);
+    const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+
+    return {
+      authenticityScore: score,
+      verdict: (parsed.verdict ?? parsed.verdict_text ?? 'UNCERTAIN').toString().toUpperCase() as 'REAL'|'FAKE'|'UNCERTAIN',
+      reasoning: parsed.reasoning ?? parsed.explanation ?? String(parsed).slice(0, 400),
+      sources: parsed.sources ?? [],
+      usedSearch: !!parsed.usedSearch,
+      visualArtifacts: parsed.visualArtifacts ?? []
+    };
+  } catch (err) {
+    console.error('analyzeAuthenticity error', err);
     return {
       authenticityScore: 50,
       verdict: 'UNCERTAIN',
-      reasoning: typeof candidate === 'string' ? candidate : JSON.stringify(candidate).slice(0, 200),
+      reasoning: 'Verification failed — service error.',
       sources: [],
       usedSearch: false,
       visualArtifacts: []
