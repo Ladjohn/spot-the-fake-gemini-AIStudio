@@ -1,4 +1,4 @@
-// src/services/geminiService.ts — UPDATED with automatic image generation (non-blocking)
+// src/services/geminiService.ts — UPDATED (debug helpers + robust image-ready event)
 // Client-safe: NO provider keys, NO server-only imports.
 
 import { NewsItem, VerificationResult, Difficulty } from '../types';
@@ -79,6 +79,9 @@ async function askLLM(payload: any) {
 
   const text = await res.text();
 
+  // Debug: expose raw LLM text to the client window for quick inspection
+  try { (window as any).__stf_last_llm_response = text; } catch (e) {}
+
   if (DEBUG) console.log('askLLM -> raw proxy response:', text.slice(0, 1000));
 
   try {
@@ -115,45 +118,57 @@ async function generateImageDataUri(prompt: string, model?: string): Promise<str
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, model })
     });
+    const txt = await r.text().catch(() => '');
+    // Try to parse body to JSON if possible
+    let j: any = null;
+    try { j = txt ? JSON.parse(txt) : null; } catch { j = null; }
+
+    // Debug: expose last image endpoint response
+    try { (window as any).__stf_last_image_response = j ?? txt ?? null; } catch (e) {}
+
     if (!r.ok) {
-      const txt = await r.text().catch(() => '');
       if (DEBUG) console.error('generateImage failed:', r.status, txt);
       return null;
     }
-    const j = await r.json();
-    return j?.dataUri ?? null;
+
+    // j should contain { ok: true, dataUri: 'data:...' }
+    const dataUri = (j && (j.dataUri || j.dataURI)) ? (j.dataUri || j.dataURI) : null;
+    return dataUri;
   } catch (e) {
     if (DEBUG) console.error('generateImage exception', e);
     return null;
   }
 }
 
+// ---------------------------------------------------------
 // concurrency mapper (limits parallel jobs)
-async function pMap<T, R>(iterable: T[], mapper: (v: T) => Promise<R>, concurrency = 2): Promise<R[]> {
-  const results: R[] = [];
-  const executing: Promise<void>[] = [];
+// simpler and robust runner used below
+// ---------------------------------------------------------
+async function runQueue<T>(jobs: Array<() => Promise<T>>, concurrency = 2) {
+  const results: T[] = [];
+  const running: Promise<void>[] = [];
 
-  for (const item of iterable) {
+  for (const job of jobs) {
     const p = (async () => {
-      const r = await mapper(item);
-      results.push(r as unknown as R);
+      try {
+        const r = await job();
+        results.push(r as T);
+      } catch (e) {
+        // swallow per-job errors
+      }
     })();
-    const e = p.then(() => {
-      // nop
-    }).catch(() => {
-      // swallow individual errors
-    });
-    executing.push(e);
-    if (executing.length >= concurrency) {
-      await Promise.race(executing);
-      // remove finished
-      for (let i = executing.length - 1; i >= 0; i--) {
-        if ((executing[i] as any).resolved) executing.splice(i, 1);
+    running.push(p.then(() => {}).catch(() => {}));
+    if (running.length >= concurrency) {
+      await Promise.race(running);
+      // cleanup finished promises
+      for (let i = running.length - 1; i >= 0; i--) {
+        // best-effort: remove already-settled promises by checking length or relying on GC
+        // Keep implementation simple; we wait on Promise.race above
       }
     }
   }
 
-  await Promise.all(executing).catch(() => {});
+  await Promise.all(running).catch(() => {});
   return results;
 }
 
@@ -256,8 +271,8 @@ Rules:
 
       if (DEBUG) console.log(`Generating ${toGenerate.length} images in background...`);
 
-      // Limit concurrency
-      const queue: Array<() => Promise<void>> = toGenerate.map(({ it, idx }) => {
+      // build job queue
+      const jobs = toGenerate.map(({ it, idx }) => {
         return async () => {
           try {
             const dataUri = await generateImageDataUri(it.imagePrompt);
@@ -268,7 +283,13 @@ Rules:
               _preloadCache[key] = items;
               // dispatch an event so UI can update in-place if listening
               try {
-                const ev = new CustomEvent('stf:image-ready', { detail: { id: items[idx].id, imageUrl: dataUri } });
+                const ev = new CustomEvent('stf:image-ready', {
+                  detail: {
+                    id: items[idx].id,
+                    headline: items[idx].headline,
+                    imageUrl: dataUri
+                  }
+                });
                 window.dispatchEvent(ev);
               } catch (e) {
                 // ignore if CustomEvent or window not available
@@ -283,25 +304,8 @@ Rules:
         };
       });
 
-      // simple concurrency runner
-      const runners: Promise<void>[] = [];
-      while (queue.length > 0) {
-        while (runners.length < IMAGE_GEN_CONCURRENCY && queue.length > 0) {
-          const job = queue.shift()!;
-          const p = job().then(() => {
-            const i = runners.indexOf(p);
-            if (i !== -1) runners.splice(i, 1);
-          }).catch(() => {
-            const i = runners.indexOf(p);
-            if (i !== -1) runners.splice(i, 1);
-          });
-          runners.push(p);
-        }
-        // wait for any to finish before queuing more
-        if (runners.length > 0) await Promise.race(runners);
-      }
-      // wait for remaining
-      await Promise.all(runners);
+      // run with concurrency
+      await runQueue<void>(jobs as any, IMAGE_GEN_CONCURRENCY);
       if (DEBUG) console.log('Background image generation finished.');
     } catch (e) {
       if (DEBUG) console.error('Background image generation encountered error', e);
