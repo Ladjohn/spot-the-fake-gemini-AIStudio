@@ -1,10 +1,10 @@
-// src/services/geminiService.ts — FULLY CLEAN & FIXED VERSION
+// src/services/geminiService.ts — FIXED VERSION
 // Client-safe: NO provider keys, NO server-only imports.
 
 import { NewsItem, VerificationResult, Difficulty } from '../types';
 
 const DEBUG = true;
-const ENDPOINT = '/api/openrouter'; 
+const ENDPOINT = '/api/openrouter';
 const MODEL = 'deepseek/deepseek-chat';
 const DEFAULT_TIMEOUT_MS = 25000;
 
@@ -30,10 +30,18 @@ async function fetchWithTimeout(
 }
 
 // ---------------------------------------------------------
-// Safe array JSON parser
+// Safe array JSON parser (improved to remove markdown/code fences)
 // ---------------------------------------------------------
 function safeParseArray(raw: string): any[] | null {
   if (!raw || typeof raw !== 'string') return null;
+
+  // Remove common markdown/code fences that LLMs sometimes add:
+  // ```json ... ``` or ``` ... ```
+  try {
+    raw = raw.replace(/```json/gi, '').replace(/```/g, '');
+    // Also remove leading/trailing single/back ticks if present
+    raw = raw.replace(/(^`+|`+$)/g, '');
+  } catch {}
 
   try {
     const parsed = JSON.parse(raw);
@@ -42,7 +50,6 @@ function safeParseArray(raw: string): any[] | null {
 
   const first = raw.indexOf('[');
   const last = raw.lastIndexOf(']');
-
   if (first !== -1 && last !== -1 && last > first) {
     try {
       const chunk = raw.slice(first, last + 1);
@@ -94,7 +101,7 @@ function fallbackNews(count: number, difficulty: Difficulty): NewsItem[] {
     difficulty,
     explanation: "",
     imagePrompt: "simple illustration of news topic in app pop-art style",
-    imageUrl: ""
+    imageUrl: "/placeholder.png"
   }));
 }
 
@@ -106,7 +113,14 @@ export async function generateQuizRound(
   count = 5
 ): Promise<NewsItem[]> {
 
-  const systemPrompt = `You generate ONLY valid JSON arrays. No explanations.`;
+  // Strong system prompt: require pure JSON (no code fences, no markdown).
+  const systemPrompt = `
+You MUST return ONLY a pure JSON ARRAY and NOTHING else.
+Do NOT include code fences, markdown, backticks, commentary, or any extra text.
+Return EXACTLY one JSON array containing the requested items.
+Each array element must be a JSON object as described by the user prompt.
+`;
+
   const userPrompt = `
 Create ${count} viral-style news items.
 
@@ -134,7 +148,8 @@ Rules:
       { role: 'user', content: userPrompt }
     ],
     temperature: 0.5,
-    max_tokens: 700
+    // increase to reduce truncation
+    max_tokens: 900
   };
 
   let raw;
@@ -167,7 +182,8 @@ Rules:
     difficulty,
     explanation: "",
     imagePrompt: item.imagePrompt || "",
-    imageUrl: item.imageUrl || ""
+    // Ensure we always have a usable image URL (fallback to local placeholder)
+    imageUrl: item.imageUrl && item.imageUrl.trim() !== "" ? item.imageUrl : "/placeholder.png"
   }));
 }
 
