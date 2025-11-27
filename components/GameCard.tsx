@@ -17,19 +17,46 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
   const [imgSrc, setImgSrc] = useState<string>(
     item?.imageUrl && item.imageUrl !== "" ? item.imageUrl : "/placeholder.png"
   );
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState<boolean>(() =>
+    (item?.imageUrl === "" || item?.imageUrl === "/placeholder.png") && !!item?.imagePrompt
+  );
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setImgSrc(item?.imageUrl && item.imageUrl !== "" ? item.imageUrl : "/placeholder.png");
-    setIsGeneratingImage(false);
+    // If item has a prompt and only placeholder image, show generating spinner
+    setIsGeneratingImage((item?.imageUrl === "" || item?.imageUrl === "/placeholder.png") && !!item?.imagePrompt);
     setHasError(false);
   }, [item]);
+
+  // Listen for background image-generation events and update image when ready
+  useEffect(() => {
+    function onImageReady(e: Event) {
+      try {
+        const ce = e as CustomEvent<{ id: string; imageUrl: string }>;
+        const detail = ce.detail;
+        if (!detail) return;
+        if (detail.id === item.id) {
+          setImgSrc(detail.imageUrl);
+          setIsGeneratingImage(false);
+          setHasError(false);
+        }
+      } catch (err) {
+        // ignore malformed events
+      }
+    }
+
+    window.addEventListener('stf:image-ready', onImageReady as EventListener);
+    return () => {
+      window.removeEventListener('stf:image-ready', onImageReady as EventListener);
+    };
+  }, [item.id]);
 
   const handleImageError = () => {
     if (hasError) return;
     console.warn("Image failed to load:", item.imageUrl);
     setHasError(true);
+    setIsGeneratingImage(false);
     setImgSrc("/placeholder.png");
   };
   // --------------------------------------------
