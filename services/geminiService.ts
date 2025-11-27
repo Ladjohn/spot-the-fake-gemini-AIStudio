@@ -1,12 +1,12 @@
-// src/services/geminiService.ts — FIXED VERSION
+// src/services/geminiService.ts — UPDATED with automatic image generation (non-blocking)
 // Client-safe: NO provider keys, NO server-only imports.
 
 import { NewsItem, VerificationResult, Difficulty } from '../types';
 
 const DEBUG = true;
 const ENDPOINT = '/api/openrouter';
-const MODEL = 'deepseek/deepseek-chat';
 const DEFAULT_TIMEOUT_MS = 25000;
+const IMAGE_GEN_CONCURRENCY = 2; // concurrent image generation requests
 
 // ---------------------------------------------------------
 // Timeout wrapper
@@ -106,7 +106,59 @@ function fallbackNews(count: number, difficulty: Difficulty): NewsItem[] {
 }
 
 // ---------------------------------------------------------
-// 🔥 generateQuizRound (clean version)
+// Image generation helper (calls serverless /api/generate-image)
+// ---------------------------------------------------------
+async function generateImageDataUri(prompt: string, model?: string): Promise<string | null> {
+  try {
+    const r = await fetch('/api/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, model })
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(() => '');
+      if (DEBUG) console.error('generateImage failed:', r.status, txt);
+      return null;
+    }
+    const j = await r.json();
+    return j?.dataUri ?? null;
+  } catch (e) {
+    if (DEBUG) console.error('generateImage exception', e);
+    return null;
+  }
+}
+
+// concurrency mapper (limits parallel jobs)
+async function pMap<T, R>(iterable: T[], mapper: (v: T) => Promise<R>, concurrency = 2): Promise<R[]> {
+  const results: R[] = [];
+  const executing: Promise<void>[] = [];
+
+  for (const item of iterable) {
+    const p = (async () => {
+      const r = await mapper(item);
+      results.push(r as unknown as R);
+    })();
+    const e = p.then(() => {
+      // nop
+    }).catch(() => {
+      // swallow individual errors
+    });
+    executing.push(e);
+    if (executing.length >= concurrency) {
+      await Promise.race(executing);
+      // remove finished
+      for (let i = executing.length - 1; i >= 0; i--) {
+        if ((executing[i] as any).resolved) executing.splice(i, 1);
+      }
+    }
+  }
+
+  await Promise.all(executing).catch(() => {});
+  return results;
+}
+
+// ---------------------------------------------------------
+// 🔥 generateQuizRound (clean version) — now starts image generation in background
 // ---------------------------------------------------------
 export async function generateQuizRound(
   difficulty: Difficulty,
@@ -142,7 +194,7 @@ Rules:
 `;
 
   const payload = {
-    model: MODEL,
+    model: 'deepseek/deepseek-chat',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
@@ -173,7 +225,8 @@ Rules:
     return fallbackNews(count, difficulty);
   }
 
-  return arr.map((item: any, i: number) => ({
+  // Map to initial items (use placeholder if no imageUrl)
+  const items: NewsItem[] = arr.map((item: any, i: number) => ({
     id: `${difficulty}-${Date.now()}-${i}`,
     headline: item.headline || "Untitled",
     summary: item.summary || "No summary provided.",
@@ -182,9 +235,80 @@ Rules:
     difficulty,
     explanation: "",
     imagePrompt: item.imagePrompt || "",
-    // Ensure we always have a usable image URL (fallback to local placeholder)
     imageUrl: item.imageUrl && item.imageUrl.trim() !== "" ? item.imageUrl : "/placeholder.png"
   }));
+
+  // Save to preload cache immediately
+  const key = `${difficulty}:${count}`;
+  _preloadCache[key] = items;
+
+  // Launch non-blocking image generation for items that need it
+  (async () => {
+    try {
+      const toGenerate = items
+        .map((it, idx) => ({ it, idx }))
+        .filter(x => x.it.imageUrl === '/placeholder.png' && x.it.imagePrompt);
+
+      if (toGenerate.length === 0) {
+        if (DEBUG) console.log('No images to generate.');
+        return;
+      }
+
+      if (DEBUG) console.log(`Generating ${toGenerate.length} images in background...`);
+
+      // Limit concurrency
+      const queue: Array<() => Promise<void>> = toGenerate.map(({ it, idx }) => {
+        return async () => {
+          try {
+            const dataUri = await generateImageDataUri(it.imagePrompt);
+            if (dataUri) {
+              // update item in cache
+              items[idx].imageUrl = dataUri;
+              // update global cache
+              _preloadCache[key] = items;
+              // dispatch an event so UI can update in-place if listening
+              try {
+                const ev = new CustomEvent('stf:image-ready', { detail: { id: items[idx].id, imageUrl: dataUri } });
+                window.dispatchEvent(ev);
+              } catch (e) {
+                // ignore if CustomEvent or window not available
+              }
+              if (DEBUG) console.log('Image generated for', items[idx].id);
+            } else {
+              if (DEBUG) console.warn('Image generation returned null for', items[idx].id);
+            }
+          } catch (err) {
+            if (DEBUG) console.error('Error generating image for', items[idx].id, err);
+          }
+        };
+      });
+
+      // simple concurrency runner
+      const runners: Promise<void>[] = [];
+      while (queue.length > 0) {
+        while (runners.length < IMAGE_GEN_CONCURRENCY && queue.length > 0) {
+          const job = queue.shift()!;
+          const p = job().then(() => {
+            const i = runners.indexOf(p);
+            if (i !== -1) runners.splice(i, 1);
+          }).catch(() => {
+            const i = runners.indexOf(p);
+            if (i !== -1) runners.splice(i, 1);
+          });
+          runners.push(p);
+        }
+        // wait for any to finish before queuing more
+        if (runners.length > 0) await Promise.race(runners);
+      }
+      // wait for remaining
+      await Promise.all(runners);
+      if (DEBUG) console.log('Background image generation finished.');
+    } catch (e) {
+      if (DEBUG) console.error('Background image generation encountered error', e);
+    }
+  })();
+
+  return items;
 }
 
 // ---------------------------------------------------------
@@ -224,7 +348,7 @@ export async function analyzeAuthenticity(
   }
 
   const payload = {
-    model: MODEL,
+    model: 'deepseek/deepseek-chat',
     messages: [
       { role: "system", content: "Return ONLY JSON. No commentary." },
       {
