@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NewsItem } from '../types';
-import { speakText } from '../services/audioService';
+import { speakHeadline } from '../services/audioService';
 import { ICONS } from '../constants';
 
 // Props
@@ -40,16 +40,22 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
   const [isDragging, setIsDragging] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // speak headline (uses audioService.speakText)
-  const handleSpeak = async (e?: React.MouseEvent | React.TouchEvent) => {
+  // speak headline (uses audioService.speakHeadline — no TTS)
+  const handleSpeak = (e?: React.MouseEvent | React.TouchEvent) => {
     if (e) e.stopPropagation();
     if (speaking) return;
     setSpeaking(true);
+
     try {
-      await speakText(item.headline);
+      // speakHeadline is intentionally a noop that returns the text for UI use
+      const returned = speakHeadline(item.headline);
+      // optionally do something with returned string (e.g., show caption). For now, we just log it.
+      // console.log('speakHeadline:', returned);
     } catch (err) {
-      console.error('speakText error', err);
+      console.error('speakHeadline error', err);
     }
+
+    // No TTS — flip speaking off immediately so UI doesn't stay loading
     setSpeaking(false);
   };
 
