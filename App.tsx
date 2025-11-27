@@ -29,10 +29,10 @@ const FunLoadingScreen: React.FC = () => {
   return (
     <div className="min-h-screen bg-g-yellow flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className={`
-          ${content[mode].color} border-4 ${content[mode].border}
-          p-10 rounded-xl shadow-neo text-center max-w-sm w-full
+          ${content[mode].color} border-4 ${content[mode].border} 
+          p-10 rounded-xl shadow-neo text-center max-w-sm w-full 
           animate-bounce-slight transition-colors duration-500
-        `}>
+      `}>
         <div className="text-8xl mb-6 transition-transform duration-300 transform scale-110 drop-shadow-md">{content[mode].icon}</div>
         <h2 className={`text-3xl font-black uppercase mb-2 ${content[mode].color === 'bg-white' ? 'text-black' : 'text-white'}`}>{content[mode].text}</h2>
         <p className={`font-mono text-sm font-bold ${content[mode].color === 'bg-white' ? 'text-gray-600' : 'text-white/80'}`}>{content[mode].sub}</p>
@@ -62,7 +62,6 @@ const App: React.FC = () => {
     history: [],
     status: 'IDLE',
     difficulty: 'Medium',
-    // safe default; localStorage used on client runtime
     highScore: typeof window !== 'undefined' ? parseInt(localStorage.getItem('spotFakeHighScore') || '0') : 0
   }));
 
@@ -89,7 +88,7 @@ const App: React.FC = () => {
     return () => stopMusic();
   }, [musicEnabled, gameState.status]);
 
-  // --- Self-heal: if PLAYING but no quizItems, fetch a round automatically ---
+  // Self-heal: if PLAYING but no quizItems, fetch
   useEffect(() => {
     let cancelled = false;
 
@@ -149,11 +148,11 @@ const App: React.FC = () => {
     setLastGuess(vote);
     setGameState(prev => {
       const newStreak = isCorrect ? prev.streak + 1 : 0;
-      const newScore = prev.score + (isCorrect ? 100 + (prev.streak * 10) : 0);
+      const newScore = prev.score + (isCorrect ? 100 + (newStreak * 10) : 0);
       const newLives = isCorrect ? prev.lives : prev.lives - 1;
 
-      if (newScore > prev.highScore) {
-        try { localStorage.setItem('spotFakeHighScore', newScore.toString()); } catch {}
+      if (newScore > prev.highScore && typeof window !== 'undefined') {
+        localStorage.setItem('spotFakeHighScore', newScore.toString());
       }
 
       return {
@@ -240,10 +239,10 @@ const App: React.FC = () => {
     const text = `I scored ${gameState.score} on Spot-the-Fake! Can you beat my high score of ${gameState.highScore}? #SpotTheFake`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Spot-the-Fake: Viral Edition', text: text, url: window.location.href });
+        await navigator.share({ title: 'Spot-the-Fake: Viral Edition', text, url: window.location.href });
       } catch (err) { console.log('Share failed', err); }
     } else {
-      try { await navigator.clipboard.writeText(text); } catch {}
+      navigator.clipboard.writeText(text);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     }
@@ -252,14 +251,14 @@ const App: React.FC = () => {
   // If loading, show loader
   if (loading) return <FunLoadingScreen />;
 
-  // Guard: prevent blank screen when quizItems are empty
+  // Guard: prevent blank screen when quizItems are empty during PLAYING
   if (!loading && (!quizItems || quizItems.length === 0) && gameState.status === 'PLAYING') {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border-2 border-black text-center">
           <p className="mb-4 font-bold">No quiz items available right now.</p>
           <button
-            onClick={() => { setGameState(prev => ({...prev, status: 'IDLE'})); playSound('CLICK'); }}
+            onClick={() => { setGameState(prev => ({ ...prev, status: 'IDLE' })); playSound('CLICK'); }}
             className="px-4 py-2 bg-g-blue text-white font-black rounded"
           >
             Back to Home
@@ -269,7 +268,7 @@ const App: React.FC = () => {
     );
   }
 
-  // IDLE
+  // IDLE screen
   if (gameState.status === 'IDLE') {
     return (
       <div className="min-h-screen bg-g-yellow flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -356,13 +355,10 @@ const App: React.FC = () => {
   // PLAYING
   return (
     <div className="min-h-screen flex flex-col overflow-hidden relative selection:bg-g-yellow selection:text-black bg-off-white dark:bg-neo-black">
-
       {/* Top Bar */}
       <header className="fixed top-0 left-0 right-0 z-40 px-4 py-3 bg-white dark:bg-zinc-900 border-b-4 border-black dark:border-white flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-g-blue border-2 border-black text-white flex items-center justify-center font-black text-lg shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_white]">
-            SF
-          </div>
+          <div className="w-10 h-10 bg-g-blue border-2 border-black text-white flex items-center justify-center font-black text-lg shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_white]">SF</div>
           <span className="font-display font-black text-xl hidden sm:block tracking-tighter text-black dark:text-white">Spot-the-Fake</span>
         </div>
 
@@ -389,7 +385,7 @@ const App: React.FC = () => {
         <div className="absolute top-20 left-10 w-32 h-32 bg-g-blue rounded-full opacity-20 blur-3xl animate-bounce-slight delay-700"></div>
         <div className="absolute bottom-20 right-10 w-40 h-40 bg-g-red rounded-full opacity-20 blur-3xl animate-bounce-slight"></div>
 
-        {currentItem && (
+        {currentItem ? (
           <div className="w-full flex flex-col items-center animate-slide-in">
             <div className="w-full max-w-md mb-4 flex justify-between items-center px-2">
               <span className="text-xs font-black bg-black text-white px-2 py-1 transform -rotate-1 border-2 border-white">ROUND {gameState.totalRoundsPlayed + 1} / {GAME_CONFIG.ROUNDS_PER_GAME}</span>
@@ -409,9 +405,7 @@ const App: React.FC = () => {
               <SkipButton onSkip={handleSkip} disabled={gameState.status !== 'PLAYING'} />
             </div>
           </div>
-        )}
-
-        {!currentItem && (
+        ) : (
           <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 border-4 border-black rounded-xl text-center">
             <h2 className="text-2xl font-black mb-2">No questions available</h2>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
