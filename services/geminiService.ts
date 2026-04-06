@@ -4,6 +4,9 @@ const ENDPOINT = '/api/openrouter';
 
 const MODEL = 'openrouter';
 
+// 🔥 CACHE (makes app feel instant)
+let cachedRound: NewsItem[] | null = null;
+
 async function askLLM(payload: any) {
   const res = await fetch(ENDPOINT, {
     method: "POST",
@@ -33,6 +36,13 @@ function safeParse(raw: string) {
 
 export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
   try {
+    // ✅ INSTANT RETURN (if cached)
+    if (cachedRound && cachedRound.length >= count) {
+      const data = cachedRound.slice(0, count);
+      cachedRound = null; // clear after use
+      return data;
+    }
+
     const res = await askLLM({
       model: MODEL,
       messages: [
@@ -77,13 +87,18 @@ Format:
 
     if (!parsed) throw new Error("Parse failed");
 
-    // ✅ FINAL FIX: ensure UI compatibility
-    return parsed.slice(0, count).map((item: any, i: number) => ({
+    // ✅ FORMAT DATA
+    const formatted = parsed.map((item: any, i: number) => ({
       id: `${Date.now()}-${i}`,
       title: item.headline || "No headline",
-      headline: item.headline || "No headline", // 🔥 UI FIX
+      headline: item.headline || "No headline",
       type: item.type === "FAKE" ? "FAKE" : "REAL"
     }));
+
+    // 🔥 STORE IN CACHE (for next round)
+    cachedRound = formatted;
+
+    return formatted.slice(0, count);
 
   } catch (err) {
     console.error("FINAL ERROR:", err);
@@ -95,7 +110,9 @@ Format:
   }
 }
 
-// keep for build
-export function preloadRound() {
-  return;
+// 🔥 PRELOAD FUNCTION (used in App.tsx)
+export async function preloadRound() {
+  try {
+    cachedRound = await generateQuizRound(5);
+  } catch {}
 }
