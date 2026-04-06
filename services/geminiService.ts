@@ -97,7 +97,7 @@ Format:
       throw new Error(res.error);
     }
 
-    // ❗ Raw fallback (sometimes HF gives string)
+    // ❗ Raw fallback
     else if (typeof res === "string") {
       content = res;
     }
@@ -117,10 +117,14 @@ Format:
   } catch (err) {
     console.error("FINAL ERROR:", err);
 
-    // 🔥 FALLBACK (safe)
     return [
       { id: "1", title: "Octopus has 3 hearts", type: "REAL" },
       { id: "2", title: "Flying cat discovered in Japan", type: "FAKE" }
     ];
   }
+}
+
+// ✅ 🔥 ADD THIS (fixes your build error)
+export function preloadRound() {
+  return;
 }
