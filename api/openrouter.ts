@@ -2,33 +2,29 @@ export default async function handler(req, res) {
   try {
     const { model, ...payload } = req.body;
 
-    // 🔥 HUGGINGFACE ROUTE
-    if (model?.startsWith('hf/')) {
-      const HF_KEY = process.env.HUGGINGFACE_API_KEY;
+    const OR_KEY = process.env.OPENROUTER_API_KEY;
 
-      if (!HF_KEY) {
-        return res.status(500).json({ error: 'Missing HF key' });
-      }
+    if (!OR_KEY) {
+      return res.status(500).json({ error: "Missing OPENROUTER_API_KEY" });
+    }
 
-      const hfModel = model.replace('hf/', '');
-      const hfUrl = `https://api-inference.huggingface.co/models/${hfModel}`;
+    // 🔥 PRIMARY MODEL (FAST + FREE)
+    const PRIMARY_MODEL = "mistralai/mistral-7b-instruct";
 
-      const prompt = payload.messages
-        ?.map((m) => `${m.role}: ${m.content}`)
-        .join('\n');
+    // 🔥 FALLBACK MODEL
+    const FALLBACK_MODEL = "meta-llama/llama-3-8b-instruct";
 
-      const response = await fetch(hfUrl, {
-        method: 'POST',
+    // 🔥 FUNCTION TO CALL OPENROUTER
+    const callOpenRouter = async (selectedModel) => {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${HF_KEY}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${OR_KEY}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: payload.max_tokens || 300,
-            temperature: payload.temperature || 0.7
-          }
+          model: selectedModel,
+          ...payload
         })
       });
 
@@ -41,39 +37,39 @@ export default async function handler(req, res) {
         parsed = text;
       }
 
-      // 🔥 Normalize to OpenAI format
-      if (Array.isArray(parsed) && parsed[0]?.generated_text) {
-        return res.status(200).json({
-          choices: [
-            {
-              message: {
-                content: parsed[0].generated_text
-              }
-            }
-          ]
-        });
+      return { response, parsed };
+    };
+
+    // 🔥 1. TRY PRIMARY MODEL
+    try {
+      const { response, parsed } = await callOpenRouter(PRIMARY_MODEL);
+
+      if (response.ok && parsed?.choices?.[0]?.message?.content) {
+        return res.status(200).json(parsed);
       }
 
-      return res.status(200).send(parsed);
+      console.warn("Primary model failed:", parsed);
+    } catch (err) {
+      console.error("Primary model error:", err);
     }
 
-    // 🔥 OPENROUTER ROUTE
-    const OR_KEY = process.env.OPENROUTER_API_KEY;
+    // 🔥 2. FALLBACK MODEL
+    try {
+      const { response, parsed } = await callOpenRouter(FALLBACK_MODEL);
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OR_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ model, ...payload })
-    });
+      if (response.ok && parsed?.choices?.[0]?.message?.content) {
+        return res.status(200).json(parsed);
+      }
 
-    const data = await response.text();
-    return res.status(200).send(data);
+      console.warn("Fallback model failed:", parsed);
+    } catch (err) {
+      console.error("Fallback model error:", err);
+    }
+
+    return res.status(500).json({ error: "All models failed" });
 
   } catch (err) {
-    console.error(err);
+    console.error("FINAL ERROR:", err);
     res.status(500).json({ error: "LLM proxy failed" });
   }
 }
