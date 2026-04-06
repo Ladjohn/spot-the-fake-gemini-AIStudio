@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { generateQuizRound } from './services/geminiService';
+import { generateQuizRound, preloadRound } from './services/geminiService';
 import { playSound } from './services/audioService';
 import { NewsItem, QuizState } from './types';
 import { GAME_CONFIG } from './constants';
@@ -8,12 +8,16 @@ import GameCard from './components/GameCard';
 import Timer from './components/Timer';
 import SkipButton from './components/SkipButton';
 
-// 🔥 Loading Screen
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center text-2xl font-black animate-pulse">
     🔍 Loading viral news...
   </div>
 );
+
+const fallbackItems: NewsItem[] = [
+  { id: "1", headline: "Octopus has 3 hearts", title: "Octopus has 3 hearts", type: "REAL" },
+  { id: "2", headline: "Cats can fly naturally", title: "Cats can fly naturally", type: "FAKE" }
+];
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -35,9 +39,9 @@ const App: React.FC = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [lastGuess, setLastGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
 
-  // 🔥 PRELOAD
+  // 🔥 PRELOAD (important)
   useEffect(() => {
-    generateQuizRound(5);
+    preloadRound();
   }, []);
 
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
@@ -54,19 +58,25 @@ const App: React.FC = () => {
     }));
 
     try {
-      const items = await generateQuizRound(5);
-      setQuizItems(items);
+      const items = await Promise.race([
+        generateQuizRound(5),
+        new Promise<NewsItem[]>((res) => setTimeout(() => res([]), 8000))
+      ]);
+
+      setQuizItems(items.length ? items : fallbackItems);
       setCurrentIndex(0);
     } catch (e) {
       console.error(e);
-      setQuizItems([]);
+      setQuizItems(fallbackItems);
     }
 
     setTimeout(() => setLoading(false), 300);
   };
 
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
-    if (navigator.vibrate) navigator.vibrate(15);
+    if (gameState.status !== 'PLAYING') return; // 🛡️ prevent spam
+
+    navigator.vibrate?.(15);
 
     const currentItem = quizItems[currentIndex];
     if (!currentItem) return;
@@ -76,8 +86,6 @@ const App: React.FC = () => {
 
     setGameState(prev => {
       const newStreak = isCorrect ? prev.streak + 1 : 0;
-
-      // 🔥 BONUS SYSTEM
       const bonus = newStreak >= 3 ? newStreak * 20 : 0;
 
       const newScore = prev.score + (isCorrect ? 100 + bonus : 0);
@@ -92,9 +100,8 @@ const App: React.FC = () => {
       };
     });
 
-    // 🔥 slightly delayed = more satisfying
     setTimeout(() => setShowAnalysis(true), 250);
-  }, [quizItems, currentIndex]);
+  }, [quizItems, currentIndex, gameState.status]);
 
   const nextQuestion = useCallback(async () => {
     if (currentIndex < quizItems.length - 1) {
@@ -107,10 +114,14 @@ const App: React.FC = () => {
 
     try {
       const nextItems = await generateQuizRound(5);
-      setQuizItems(nextItems);
+      setQuizItems(nextItems.length ? nextItems : fallbackItems);
       setCurrentIndex(0);
+
+      // 🔥 preload next (pro move)
+      preloadRound();
     } catch (e) {
       console.error(e);
+      setQuizItems(fallbackItems);
     }
 
     setLoading(false);
@@ -123,14 +134,19 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
 
-      {/* 🔥 STREAK INDICATOR */}
+      {/* 📊 PROGRESS */}
+      <div className="text-xs font-bold text-gray-500 mb-2">
+        Question {currentIndex + 1}
+      </div>
+
+      {/* 🔥 STREAK */}
       {gameState.streak > 1 && (
         <div className="mb-2 text-lg font-black text-orange-500 animate-bounce">
           🔥 {gameState.streak} STREAK!
         </div>
       )}
 
-      {/* ⚠️ LAST LIFE WARNING */}
+      {/* ⚠️ LAST LIFE */}
       {gameState.lives === 1 && (
         <div className="mb-2 text-red-500 font-black animate-pulse">
           ⚠️ LAST LIFE
@@ -139,11 +155,13 @@ const App: React.FC = () => {
 
       {currentItem ? (
         <>
-          <GameCard
-            item={currentItem}
-            onVote={handleVote}
-            disabled={gameState.status === 'ANALYSIS'}
-          />
+          <div className="animate-fade-in">
+            <GameCard
+              item={currentItem}
+              onVote={handleVote}
+              disabled={gameState.status === 'ANALYSIS'}
+            />
+          </div>
 
           <Timer
             duration={GAME_CONFIG.TIMER_SECONDS}
