@@ -8,25 +8,43 @@ export default async function handler(req, res) {
 
     const { messages } = req.body;
 
-    // ✅ WORKING MODELS (FREE + AVAILABLE)
     const PRIMARY_MODEL = "meta-llama/llama-3-8b-instruct";
     const FALLBACK_MODEL = "mistralai/mistral-7b-instruct:free";
 
-    const callModel = async (model) => {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OR_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model,
-          messages
-        })
-      });
+    // 🔥 timeout wrapper (prevents hanging)
+    const fetchWithTimeout = (url, options, timeout = 8000) => {
+      return Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), timeout)
+        )
+      ]);
+    };
 
-      const data = await response.json();
-      return data;
+    const callModel = async (model) => {
+      try {
+        const response = await fetchWithTimeout(
+          "https://openrouter.ai/api/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${OR_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model,
+              messages
+            })
+          },
+          8000 // ⏱️ max 8 seconds
+        );
+
+        const data = await response.json();
+        return data;
+      } catch (err) {
+        console.warn(`Model ${model} failed:`, err.message);
+        return null;
+      }
     };
 
     // 🔥 TRY PRIMARY
@@ -38,8 +56,6 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
 
-    console.warn("Primary failed, trying fallback...");
-
     // 🔥 FALLBACK
     data = await callModel(FALLBACK_MODEL);
 
@@ -49,10 +65,34 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
 
-    return res.status(500).json({ error: "All models failed", data });
+    // 🔥 FINAL SAFE RESPONSE (prevents blank UI)
+    return res.status(200).json({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify([
+              { headline: "AI is warming up... try again!", type: "FAKE" },
+              { headline: "Octopus has 3 hearts", type: "REAL" }
+            ])
+          }
+        }
+      ]
+    });
 
   } catch (err) {
     console.error("FINAL ERROR:", err);
-    return res.status(500).json({ error: "LLM proxy failed" });
+
+    return res.status(200).json({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify([
+              { headline: "Server busy, retrying...", type: "FAKE" },
+              { headline: "Bananas are berries", type: "REAL" }
+            ])
+          }
+        }
+      ]
+    });
   }
 }
