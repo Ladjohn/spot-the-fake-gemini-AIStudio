@@ -2,8 +2,8 @@ import { NewsItem } from '../types';
 
 const ENDPOINT = '/api/openrouter';
 
-// ✅ Stable HF model
-const MODEL = 'hf/meta-llama/Meta-Llama-3-8B-Instruct';
+// ✅ REMOVE HF COMPLETELY
+const MODEL = 'openrouter';
 
 async function askLLM(payload: any) {
   const res = await fetch(ENDPOINT, {
@@ -15,7 +15,7 @@ async function askLLM(payload: any) {
   return res.json();
 }
 
-// 🔥 STRONG PARSER (fixes blank content issue)
+// 🔥 STRONG PARSER
 function safeParse(raw: string) {
   try {
     return JSON.parse(raw);
@@ -32,27 +32,26 @@ function safeParse(raw: string) {
   }
 }
 
-// 🔥 MAIN GAME GENERATOR
 export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
   try {
-    let res;
-
-    // ✅ Retry (HF cold start fix)
-    try {
-      res = await askLLM({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "Return ONLY JSON array. No text."
-          },
-          {
-            role: "user",
-            content: `
+    const res = await askLLM({
+      model: MODEL, // 🔥 now irrelevant, backend controls model
+      messages: [
+        {
+          role: "system",
+          content: "Return ONLY JSON array. No explanation."
+        },
+        {
+          role: "user",
+          content: `
 Generate ${count} tricky viral news items.
 
-Return ONLY JSON array.
+STRICT RULES:
+- Return ONLY JSON
+- No text before or after
+- No explanation
 
+Format:
 [
   {
     "headline": "...",
@@ -60,58 +59,22 @@ Return ONLY JSON array.
   }
 ]
 `
-          }
-        ]
-      });
-    } catch {
-      res = await askLLM({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "Return ONLY JSON array. No text."
-          },
-          {
-            role: "user",
-            content: `
-Generate ${count} tricky viral news items.
+        }
+      ]
+    });
 
-Return ONLY JSON array.
-
-[
-  {
-    "headline": "...",
-    "type": "REAL" or "FAKE"
-  }
-]
-`
-          }
-        ]
-      });
-    }
+    console.log("FULL API RESPONSE:", res);
 
     let content = "";
 
-    // ✅ Handle OpenAI-style response
+    // ✅ OpenRouter response
     if (res?.choices?.[0]?.message?.content) {
       content = res.choices[0].message.content;
     }
 
-    // ❗ HF sometimes returns raw text
-    else if (typeof res === "string") {
-      content = res;
-    }
-
-    // ❗ HF error
-    else if (res?.error) {
-      console.error("HF Error:", res.error);
-      throw new Error(res.error);
-    }
-
-    // 🔥 IMPORTANT DEBUG (NOW CORRECT POSITION)
-    console.log("LLM RAW CONTENT:", content);
-
     if (!content) throw new Error("No content from model");
+
+    console.log("EXTRACTED CONTENT:", content);
 
     const parsed = safeParse(content);
 
@@ -133,7 +96,7 @@ Return ONLY JSON array.
   }
 }
 
-// ✅ Fix build dependency
+// keep for build
 export function preloadRound() {
   return;
 }
