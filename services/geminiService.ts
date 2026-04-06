@@ -29,12 +29,17 @@ function preloadImage(src: string): Promise<void> {
 }
 
 // 🔥 IMAGE FETCH (FAST + OPTIMIZED)
-async function fetchImage(query: string): Promise<string> {
-  try {
-    // 🔥 check cache first
-    if (imageCache.has(query)) {
-      return imageCache.get(query)!;
-    }
+async function fetchImage(query: string): string {
+  const keyword = query
+    .split(" ")
+    .slice(0, 3)
+    .join("-")
+    .replace(/[^\w-]/gi, "")
+    .toLowerCase();
+
+  // 🔥 deterministic image per headline
+  return `https://picsum.photos/seed/${keyword}/600/400`;
+}
 
     const keyword = query
       .split(" ")
