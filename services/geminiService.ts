@@ -2,7 +2,6 @@ import { NewsItem } from '../types';
 
 const ENDPOINT = '/api/openrouter';
 
-// ✅ REMOVE HF COMPLETELY
 const MODEL = 'openrouter';
 
 async function askLLM(payload: any) {
@@ -15,7 +14,7 @@ async function askLLM(payload: any) {
   return res.json();
 }
 
-// 🔥 STRONG PARSER
+// 🔥 Strong JSON extractor
 function safeParse(raw: string) {
   try {
     return JSON.parse(raw);
@@ -35,7 +34,7 @@ function safeParse(raw: string) {
 export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
   try {
     const res = await askLLM({
-      model: MODEL, // 🔥 now irrelevant, backend controls model
+      model: MODEL,
       messages: [
         {
           role: "system",
@@ -48,8 +47,7 @@ Generate ${count} tricky viral news items.
 
 STRICT RULES:
 - Return ONLY JSON
-- No text before or after
-- No explanation
+- No extra text
 
 Format:
 [
@@ -67,7 +65,6 @@ Format:
 
     let content = "";
 
-    // ✅ OpenRouter response
     if (res?.choices?.[0]?.message?.content) {
       content = res.choices[0].message.content;
     }
@@ -80,9 +77,11 @@ Format:
 
     if (!parsed) throw new Error("Parse failed");
 
-    return parsed.map((item: any, i: number) => ({
+    // ✅ FINAL FIX: ensure UI compatibility
+    return parsed.slice(0, count).map((item: any, i: number) => ({
       id: `${Date.now()}-${i}`,
       title: item.headline || "No headline",
+      headline: item.headline || "No headline", // 🔥 UI FIX
       type: item.type === "FAKE" ? "FAKE" : "REAL"
     }));
 
@@ -90,8 +89,8 @@ Format:
     console.error("FINAL ERROR:", err);
 
     return [
-      { id: "1", title: "Octopus has 3 hearts", type: "REAL" },
-      { id: "2", title: "Flying cat discovered in Japan", type: "FAKE" }
+      { id: "1", title: "Octopus has 3 hearts", headline: "Octopus has 3 hearts", type: "REAL" },
+      { id: "2", title: "Flying cat discovered in Japan", headline: "Flying cat discovered in Japan", type: "FAKE" }
     ];
   }
 }
