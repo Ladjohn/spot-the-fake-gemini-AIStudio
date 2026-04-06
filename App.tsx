@@ -1,15 +1,14 @@
 // src/App.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { generateQuizRound } from './services/geminiService';
-import { playSound, startMusic, stopMusic } from './services/audioService';
+import { playSound } from './services/audioService';
 import { NewsItem, QuizState } from './types';
-import { ICONS, GAME_CONFIG } from './constants';
+import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
-import AnalysisModal from './components/AnalysisModal';
 import Timer from './components/Timer';
 import SkipButton from './components/SkipButton';
 
-// 🔥 Simple Loading Screen (RESTORED)
+// 🔥 Loading Screen
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center text-2xl font-black animate-pulse">
     🔍 Loading viral news...
@@ -36,15 +35,14 @@ const App: React.FC = () => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [lastGuess, setLastGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
 
-  // 🔥 PRELOAD ON LOAD (makes it feel instant)
+  // 🔥 PRELOAD
   useEffect(() => {
     generateQuizRound(5);
   }, []);
 
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
     playSound('CLICK');
-
-    setLoading(true); // 🔥 show loader immediately
+    setLoading(true);
 
     setGameState(prev => ({
       ...prev,
@@ -56,9 +54,7 @@ const App: React.FC = () => {
     }));
 
     try {
-      // 🔥 reduced from 10 → 5 (faster)
       const items = await generateQuizRound(5);
-
       setQuizItems(items);
       setCurrentIndex(0);
     } catch (e) {
@@ -66,44 +62,47 @@ const App: React.FC = () => {
       setQuizItems([]);
     }
 
-    // 🔥 smooth transition
     setTimeout(() => setLoading(false), 300);
   };
 
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
-    if (navigator.vibrate) navigator.vibrate(15); // 🔥 haptic
+    if (navigator.vibrate) navigator.vibrate(15);
 
     const currentItem = quizItems[currentIndex];
     if (!currentItem) return;
 
     const isCorrect = vote === currentItem.type;
-
     setLastGuess(vote);
 
     setGameState(prev => {
-      const newScore = prev.score + (isCorrect ? 100 : 0);
+      const newStreak = isCorrect ? prev.streak + 1 : 0;
+
+      // 🔥 BONUS SYSTEM
+      const bonus = newStreak >= 3 ? newStreak * 20 : 0;
+
+      const newScore = prev.score + (isCorrect ? 100 + bonus : 0);
       const newLives = isCorrect ? prev.lives : prev.lives - 1;
 
       return {
         ...prev,
         score: newScore,
+        streak: newStreak,
         lives: newLives,
         status: newLives <= 0 ? 'GAME_OVER' : 'ANALYSIS'
       };
     });
 
-    setTimeout(() => setShowAnalysis(true), 150);
+    // 🔥 slightly delayed = more satisfying
+    setTimeout(() => setShowAnalysis(true), 250);
   }, [quizItems, currentIndex]);
 
   const nextQuestion = useCallback(async () => {
-    // 🔥 instant next if available
     if (currentIndex < quizItems.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setGameState(prev => ({ ...prev, status: 'PLAYING' }));
       return;
     }
 
-    // 🔥 fetch new batch
     setLoading(true);
 
     try {
@@ -117,13 +116,26 @@ const App: React.FC = () => {
     setLoading(false);
   }, [currentIndex, quizItems.length]);
 
-  // 🔥 SHOW LOADING SCREEN
   if (loading) return <LoadingScreen />;
 
   const currentItem = quizItems[currentIndex];
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
+
+      {/* 🔥 STREAK INDICATOR */}
+      {gameState.streak > 1 && (
+        <div className="mb-2 text-lg font-black text-orange-500 animate-bounce">
+          🔥 {gameState.streak} STREAK!
+        </div>
+      )}
+
+      {/* ⚠️ LAST LIFE WARNING */}
+      {gameState.lives === 1 && (
+        <div className="mb-2 text-red-500 font-black animate-pulse">
+          ⚠️ LAST LIFE
+        </div>
+      )}
 
       {currentItem ? (
         <>
@@ -135,7 +147,9 @@ const App: React.FC = () => {
 
           <Timer
             duration={GAME_CONFIG.TIMER_SECONDS}
-            onTimeUp={() => setGameState(prev => ({ ...prev, status: 'GAME_OVER' }))}
+            onTimeUp={() =>
+              setGameState(prev => ({ ...prev, status: 'GAME_OVER' }))
+            }
             active={gameState.status === 'PLAYING'}
           />
 
