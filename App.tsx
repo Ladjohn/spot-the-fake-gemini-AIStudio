@@ -9,7 +9,7 @@ import AnalysisModal from './components/AnalysisModal';
 import Timer from './components/Timer';
 import SkipButton from './components/SkipButton';
 
-// 🔥 NEW: Performance Logic
+// 🔥 Performance Logic
 const getPerformanceText = (score: number) => {
   const percent = Math.min(100, Math.floor((score / 1000) * 100));
 
@@ -43,6 +43,18 @@ const App: React.FC = () => {
 
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [lastGuess, setLastGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
+
+  // 🔥 Challenge detection (NEW)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const challengeScore = params.get('challengeScore');
+
+    if (challengeScore) {
+      setTimeout(() => {
+        alert(`🔥 Challenge: Beat ${challengeScore} points!`);
+      }, 500);
+    }
+  }, []);
 
   useEffect(() => {
     preloadRound('Easy', 1);
@@ -95,7 +107,6 @@ const App: React.FC = () => {
     if (!currentItem) return;
 
     const isCorrect = vote === currentItem.type.toUpperCase();
-
     setLastGuess(vote);
 
     setGameState(prev => {
@@ -140,22 +151,29 @@ const App: React.FC = () => {
     }
   }, [currentIndex, quizItems.length, gameState.difficulty]);
 
+  // 🔥 VIRAL SHARE (UPDATED)
   const handleShare = async () => {
     playSound('CLICK');
 
     const percent = Math.min(100, Math.floor((gameState.score / 1000) * 100));
+    const url = `${window.location.origin}?challengeScore=${gameState.score}`;
 
     const text = `I scored ${gameState.score} on Spot-the-Fake 🤯
 
 I beat ${percent}% of players.
-Can you beat me? 👇`;
+Can you beat me? 👇
+${url}`;
 
     if (navigator.share) {
-      await navigator.share({
-        title: 'Spot-the-Fake',
-        text,
-        url: window.location.href
-      });
+      try {
+        await navigator.share({
+          title: 'Spot-the-Fake Challenge',
+          text,
+          url
+        });
+      } catch (err) {
+        console.log(err);
+      }
     } else {
       navigator.clipboard.writeText(text);
       setShowToast(true);
@@ -163,11 +181,12 @@ Can you beat me? 👇`;
     }
   };
 
-  // 🧠 GAME OVER SCREEN (UPGRADED)
+  // 🔥 GAME OVER (UPGRADED)
   if (gameState.status === 'GAME_OVER') {
     return (
       <div className="min-h-screen bg-g-red flex items-center justify-center p-4">
         <div className="bg-white p-8 border-4 border-black text-center rounded-xl">
+
           <h1 className="text-4xl font-black mb-4">GAME OVER 💀</h1>
 
           <div className="text-5xl font-black text-g-yellow mb-2">
@@ -177,6 +196,14 @@ Can you beat me? 👇`;
           <p className="mb-6 font-bold">
             {getPerformanceText(gameState.score)}
           </p>
+
+          {/* 🔥 FAKE LEADERBOARD */}
+          <div className="mb-6 text-sm text-left">
+            <p className="font-bold mb-2">🏆 Top Players</p>
+            <div className="flex justify-between"><span>Aman</span><span>1240</span></div>
+            <div className="flex justify-between"><span>Priya</span><span>980</span></div>
+            <div className="flex justify-between"><span>Rahul</span><span>870</span></div>
+          </div>
 
           <div className="flex gap-4 justify-center">
             <button
@@ -190,15 +217,15 @@ Can you beat me? 👇`;
               onClick={handleShare}
               className="px-6 py-3 bg-black text-white font-black rounded"
             >
-              Share 🚀
+              🚀 Challenge
             </button>
           </div>
+
         </div>
       </div>
     );
   }
 
-  // 🟢 PLAYING
   const currentItem = quizItems[currentIndex];
 
   return (
