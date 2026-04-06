@@ -1,15 +1,14 @@
-// src/services/geminiService.ts — UPDATED (debug helpers + robust image-ready event)
-// Client-safe: NO provider keys, NO server-only imports.
+// src/services/geminiService.ts
 
 import { NewsItem, VerificationResult, Difficulty } from '../types';
 
 const DEBUG = true;
 const ENDPOINT = '/api/openrouter';
 const DEFAULT_TIMEOUT_MS = 25000;
-const IMAGE_GEN_CONCURRENCY = 2; // concurrent image generation requests
 
-// ---------------------------------------------------------
-// Timeout wrapper
+// 🔥 FREE MODEL
+const MODEL = 'meta-llama/llama-3-8b-instruct';
+
 // ---------------------------------------------------------
 async function fetchWithTimeout(
   url: string,
@@ -30,31 +29,21 @@ async function fetchWithTimeout(
 }
 
 // ---------------------------------------------------------
-// Safe array JSON parser (improved to remove markdown/code fences)
-// ---------------------------------------------------------
 function safeParseArray(raw: string): any[] | null {
-  if (!raw || typeof raw !== 'string') return null;
+  if (!raw) return null;
 
-  // Remove common markdown/code fences that LLMs sometimes add:
-  // ```json ... ``` or ``` ... ```
-  try {
-    raw = raw.replace(/```json/gi, '').replace(/```/g, '');
-    // Also remove leading/trailing single/back ticks if present
-    raw = raw.replace(/(^`+|`+$)/g, '');
-  } catch {}
+  raw = raw.replace(/```json|```/gi, "").trim();
 
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return parsed;
   } catch {}
 
-  const first = raw.indexOf('[');
-  const last = raw.lastIndexOf(']');
-  if (first !== -1 && last !== -1 && last > first) {
+  const start = raw.indexOf("[");
+  const end = raw.lastIndexOf("]");
+  if (start !== -1 && end !== -1) {
     try {
-      const chunk = raw.slice(first, last + 1);
-      const parsed2 = JSON.parse(chunk);
-      if (Array.isArray(parsed2)) return parsed2;
+      return JSON.parse(raw.slice(start, end + 1));
     } catch {}
   }
 
@@ -62,27 +51,16 @@ function safeParseArray(raw: string): any[] | null {
 }
 
 // ---------------------------------------------------------
-// Ask LLM (via secure serverless proxy)
-// ---------------------------------------------------------
 async function askLLM(payload: any) {
-  if (DEBUG) console.log('askLLM -> proxy payload:', payload);
-
-  const res = await fetchWithTimeout(
-    ENDPOINT,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    },
-    DEFAULT_TIMEOUT_MS
-  );
+  const res = await fetchWithTimeout(ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
   const text = await res.text();
 
-  // Debug: expose raw LLM text to the client window for quick inspection
-  try { (window as any).__stf_last_llm_response = text; } catch (e) {}
-
-  if (DEBUG) console.log('askLLM -> raw proxy response:', text.slice(0, 1000));
+  if (DEBUG) console.log("LLM RAW:", text);
 
   try {
     return JSON.parse(text);
@@ -92,282 +70,123 @@ async function askLLM(payload: any) {
 }
 
 // ---------------------------------------------------------
-// FALLBACK GENERATOR
-// ---------------------------------------------------------
 function fallbackNews(count: number, difficulty: Difficulty): NewsItem[] {
   return Array.from({ length: count }).map((_, i) => ({
     id: `${difficulty}-fallback-${i}`,
-    headline: "AI failed to generate headline",
-    summary: "Using fallback placeholder.",
-    type: "REAL",
+    headline: "AI failed — fallback question",
+    summary: "Using local fallback.",
+    type: Math.random() > 0.5 ? "REAL" : "FAKE",
     category: "General",
     difficulty,
     explanation: "",
-    imagePrompt: "simple illustration of news topic in app pop-art style",
+    imagePrompt: "",
     imageUrl: "/placeholder.png"
   }));
 }
 
 // ---------------------------------------------------------
-// Image generation helper (calls serverless /api/generate-image)
-// ---------------------------------------------------------
-async function generateImageDataUri(prompt: string, model?: string): Promise<string | null> {
-  try {
-    const r = await fetch('/api/generate-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model })
-    });
-    const txt = await r.text().catch(() => '');
-    // Try to parse body to JSON if possible
-    let j: any = null;
-    try { j = txt ? JSON.parse(txt) : null; } catch { j = null; }
-
-    // Debug: expose last image endpoint response
-    try { (window as any).__stf_last_image_response = j ?? txt ?? null; } catch (e) {}
-
-    if (!r.ok) {
-      if (DEBUG) console.error('generateImage failed:', r.status, txt);
-      return null;
-    }
-
-    // j should contain { ok: true, dataUri: 'data:...' }
-    const dataUri = (j && (j.dataUri || j.dataURI)) ? (j.dataUri || j.dataURI) : null;
-    return dataUri;
-  } catch (e) {
-    if (DEBUG) console.error('generateImage exception', e);
-    return null;
-  }
-}
-
-// ---------------------------------------------------------
-// concurrency mapper (limits parallel jobs)
-// simpler and robust runner used below
-// ---------------------------------------------------------
-async function runQueue<T>(jobs: Array<() => Promise<T>>, concurrency = 2) {
-  const results: T[] = [];
-  const running: Promise<void>[] = [];
-
-  for (const job of jobs) {
-    const p = (async () => {
-      try {
-        const r = await job();
-        results.push(r as T);
-      } catch (e) {
-        // swallow per-job errors
-      }
-    })();
-    running.push(p.then(() => {}).catch(() => {}));
-    if (running.length >= concurrency) {
-      await Promise.race(running);
-      // cleanup finished promises
-      for (let i = running.length - 1; i >= 0; i--) {
-        // best-effort: remove already-settled promises by checking length or relying on GC
-        // Keep implementation simple; we wait on Promise.race above
-      }
-    }
-  }
-
-  await Promise.all(running).catch(() => {});
-  return results;
-}
-
-// ---------------------------------------------------------
-// 🔥 generateQuizRound (clean version) — now starts image generation in background
+// 🔥 MAIN GENERATOR (FREE MODEL)
 // ---------------------------------------------------------
 export async function generateQuizRound(
   difficulty: Difficulty,
   count = 5
 ): Promise<NewsItem[]> {
 
-  // Strong system prompt: require pure JSON (no code fences, no markdown).
-  const systemPrompt = `
-You MUST return ONLY a pure JSON ARRAY and NOTHING else.
-Do NOT include code fences, markdown, backticks, commentary, or any extra text.
-Return EXACTLY one JSON array containing the requested items.
-Each array element must be a JSON object as described by the user prompt.
-`;
+  const payload = {
+    model: MODEL,
+    messages: [
+      {
+        role: "system",
+        content: `
+Return ONLY valid JSON array.
+No markdown.
+No explanation.
+Strict JSON only.
+`
+      },
+      {
+        role: "user",
+        content: `
+Create ${count} viral, tricky news items.
 
-  const userPrompt = `
-Create ${count} viral-style news items.
+Return JSON array ONLY.
 
-Return STRICT JSON ARRAY ONLY.
-
-Each item MUST be:
-
+Each item:
 {
-  "headline": "short news headline",
-  "summary": "1–2 sentence summary",
-  "type": "REAL" | "FAKE",
-  "imagePrompt": "short visual description",
-  "imageUrl": ""
+  "headline": "...",
+  "summary": "...",
+  "type": "REAL" or "FAKE"
 }
 
-Rules:
-- Keep fun, believable.
-- Difficulty = ${difficulty}.
-`;
-
-  const payload = {
-    model: 'deepseek/deepseek-chat',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+Make them confusing and engaging.
+Difficulty: ${difficulty}
+`
+      }
     ],
-    temperature: 0.5,
-    // increase to reduce truncation
-    max_tokens: 900
+    temperature: 0.7,
+    max_tokens: 800
   };
 
   let raw;
   try {
     raw = await askLLM(payload);
   } catch (err) {
-    if (DEBUG) console.error('generateQuizRound askLLM failed:', err);
+    console.error("LLM failed:", err);
     return fallbackNews(count, difficulty);
   }
 
   let content = "";
   if (typeof raw === "string") content = raw;
-  else if (raw?.choices) content = raw.choices[0]?.message?.content ?? "";
-  else content = JSON.stringify(raw);
-
-  if (DEBUG) console.log('generateQuizRound content:', content.slice(0, 1000));
+  else content = raw?.choices?.[0]?.message?.content || "";
 
   const arr = safeParseArray(content);
+
   if (!arr) {
-    if (DEBUG) console.error("safeParseArray failed — using fallback");
+    console.error("Parse failed → fallback");
     return fallbackNews(count, difficulty);
   }
 
-  // Map to initial items (use placeholder if no imageUrl)
-  const items: NewsItem[] = arr.map((item: any, i: number) => ({
-    id: `${difficulty}-${Date.now()}-${i}`,
+  return arr.map((item: any, i: number) => ({
+    id: `${Date.now()}-${i}`,
     headline: item.headline || "Untitled",
-    summary: item.summary || "No summary provided.",
+    summary: item.summary || "",
     type: item.type === "FAKE" ? "FAKE" : "REAL",
     category: "General",
     difficulty,
     explanation: "",
-    imagePrompt: item.imagePrompt || "",
-    imageUrl: item.imageUrl && item.imageUrl.trim() !== "" ? item.imageUrl : "/placeholder.png"
+    imagePrompt: "",
+    imageUrl: "/placeholder.png"
   }));
-
-  // Save to preload cache immediately
-  const key = `${difficulty}:${count}`;
-  _preloadCache[key] = items;
-
-  // Launch non-blocking image generation for items that need it
-  (async () => {
-    try {
-      const toGenerate = items
-        .map((it, idx) => ({ it, idx }))
-        .filter(x => x.it.imageUrl === '/placeholder.png' && x.it.imagePrompt);
-
-      if (toGenerate.length === 0) {
-        if (DEBUG) console.log('No images to generate.');
-        return;
-      }
-
-      if (DEBUG) console.log(`Generating ${toGenerate.length} images in background...`);
-
-      // build job queue
-      const jobs = toGenerate.map(({ it, idx }) => {
-        return async () => {
-          try {
-            const dataUri = await generateImageDataUri(it.imagePrompt);
-            if (dataUri) {
-              // update item in cache
-              items[idx].imageUrl = dataUri;
-              // update global cache
-              _preloadCache[key] = items;
-              // dispatch an event so UI can update in-place if listening
-              try {
-                const ev = new CustomEvent('stf:image-ready', {
-                  detail: {
-                    id: items[idx].id,
-                    headline: items[idx].headline,
-                    imageUrl: dataUri
-                  }
-                });
-                window.dispatchEvent(ev);
-              } catch (e) {
-                // ignore if CustomEvent or window not available
-              }
-              if (DEBUG) console.log('Image generated for', items[idx].id);
-            } else {
-              if (DEBUG) console.warn('Image generation returned null for', items[idx].id);
-            }
-          } catch (err) {
-            if (DEBUG) console.error('Error generating image for', items[idx].id, err);
-          }
-        };
-      });
-
-      // run with concurrency
-      await runQueue<void>(jobs as any, IMAGE_GEN_CONCURRENCY);
-      if (DEBUG) console.log('Background image generation finished.');
-    } catch (e) {
-      if (DEBUG) console.error('Background image generation encountered error', e);
-    }
-  })();
-
-  return items;
 }
 
 // ---------------------------------------------------------
-// Preloader
-// ---------------------------------------------------------
-let _preloadCache: Record<string, NewsItem[]> = {};
-
-export async function preloadRound(
-  difficulty: Difficulty,
-  count = 1
-): Promise<void> {
-  const key = `${difficulty}:${count}`;
-  if (_preloadCache[key]) return;
-
-  try {
-    _preloadCache[key] = await generateQuizRound(difficulty, count);
-  } catch (e) {
-    if (DEBUG) console.warn("preload failed:", e);
-  }
-}
-
-// ---------------------------------------------------------
-// 🔥 analyzeAuthenticity (clean version)
+// 🔥 ANALYSIS (FREE MODEL)
 // ---------------------------------------------------------
 export async function analyzeAuthenticity(
   item: NewsItem
 ): Promise<VerificationResult> {
-  if (!item?.headline || !item?.summary) {
-    return {
-      authenticityScore: 50,
-      verdict: "UNCERTAIN",
-      reasoning: "Missing headline/summary",
-      sources: [],
-      usedSearch: false,
-      visualArtifacts: []
-    };
-  }
 
   const payload = {
-    model: 'deepseek/deepseek-chat',
+    model: MODEL,
     messages: [
-      { role: "system", content: "Return ONLY JSON. No commentary." },
+      {
+        role: "system",
+        content: "Return ONLY JSON."
+      },
       {
         role: "user",
         content: `
-Analyze this news item and return ONLY:
-
-{
-  "authenticityScore": number,
-  "verdict": "REAL" | "FAKE" | "UNCERTAIN",
-  "reasoning": "text"
-}
+Analyze:
 
 Headline: ${item.headline}
 Summary: ${item.summary}
+
+Return:
+{
+  "authenticityScore": number,
+  "verdict": "REAL" | "FAKE",
+  "reasoning": "text"
+}
 `
       }
     ],
@@ -378,12 +197,11 @@ Summary: ${item.summary}
   let raw;
   try {
     raw = await askLLM(payload);
-  } catch (err) {
-    if (DEBUG) console.error('analyzeAuthenticity askLLM failed:', err);
+  } catch {
     return {
       authenticityScore: 50,
       verdict: "UNCERTAIN",
-      reasoning: "LLM service failed",
+      reasoning: "LLM failed",
       sources: [],
       usedSearch: false,
       visualArtifacts: []
@@ -392,49 +210,35 @@ Summary: ${item.summary}
 
   let content = "";
   if (typeof raw === "string") content = raw;
-  else if (raw?.choices) content = raw.choices[0]?.message?.content ?? "";
-  else content = JSON.stringify(raw);
+  else content = raw?.choices?.[0]?.message?.content || "";
 
-  let parsed = null;
   try {
-    parsed = JSON.parse(content);
+    const parsed = JSON.parse(content);
+    return {
+      authenticityScore: parsed.authenticityScore || 50,
+      verdict: parsed.verdict || "UNCERTAIN",
+      reasoning: parsed.reasoning || "",
+      sources: [],
+      usedSearch: false,
+      visualArtifacts: []
+    };
   } catch {
-    const a = content.indexOf("{");
-    const b = content.lastIndexOf("}");
-    if (a !== -1 && b !== -1) {
-      try { parsed = JSON.parse(content.slice(a, b + 1)); } catch {}
-    }
-  }
-
-  if (!parsed) {
     return {
       authenticityScore: 50,
       verdict: "UNCERTAIN",
-      reasoning: content.slice(0, 300),
+      reasoning: content,
       sources: [],
       usedSearch: false,
       visualArtifacts: []
     };
   }
-
-  let score = Number(parsed.authenticityScore ?? 50);
-  if (!isFinite(score)) score = 50;
-  if (score <= 1) score = Math.round(score * 100);
-  score = Math.max(0, Math.min(100, Math.round(score)));
-
-  return {
-    authenticityScore: score,
-    verdict: (parsed.verdict ?? "UNCERTAIN").toUpperCase(),
-    reasoning: parsed.reasoning || "",
-    sources: [],
-    usedSearch: false,
-    visualArtifacts: []
-  };
 }
 
 // ---------------------------------------------------------
-// Simple helper
-// ---------------------------------------------------------
+export function preloadRound() {
+  return;
+}
+
 export function speakHeadline(text: string) {
   return text;
 }
