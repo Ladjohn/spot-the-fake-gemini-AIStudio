@@ -9,19 +9,21 @@ interface GameCardProps {
 }
 
 const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
-  const [imgSrc, setImgSrc] = useState(
-    item?.imageUrl || "/placeholder.png"
-  );
+  const [imgSrc, setImgSrc] = useState(item?.imageUrl || "/placeholder.png");
+  const [loaded, setLoaded] = useState(false);
 
   const [offsetX, setOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+
   const hasVoted = useRef(false);
   const startX = useRef(0);
 
+  // 🔥 reset per new card
   useEffect(() => {
+    setLoaded(false);
     setImgSrc(item?.imageUrl || "/placeholder.png");
     setOffsetX(0);
-    hasVoted.current = false; // 🔥 reset per card
+    hasVoted.current = false;
   }, [item]);
 
   const handleInteraction = (type: 'REAL' | 'FAKE') => {
@@ -29,45 +31,44 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
 
     hasVoted.current = true;
 
-    // 🔥 haptic + sound
     navigator.vibrate?.([10, 30, 10]);
     playSound(type === 'REAL' ? 'SUCCESS' : 'ERROR');
 
     onVote(type);
   };
 
-  // 🔥 swipe start
+  // 👉 SWIPE START
   const handleStart = (clientX: number) => {
     if (disabled || hasVoted.current) return;
     setIsDragging(true);
     startX.current = clientX;
   };
 
-  // 🔥 swipe move (smoothed)
+  // 👉 SWIPE MOVE (GPU-friendly)
   const handleMove = (clientX: number) => {
     if (!isDragging || disabled || hasVoted.current) return;
 
     const delta = clientX - startX.current;
+    const clamped = Math.max(-180, Math.min(180, delta));
 
-    // 🔥 limit max drag (prevents crazy jumps)
-    const clamped = Math.max(-200, Math.min(200, delta));
     setOffsetX(clamped);
   };
 
+  // 👉 SWIPE END
   const handleEnd = () => {
     if (!isDragging || hasVoted.current) return;
 
     setIsDragging(false);
 
-    const threshold = 100;
+    const threshold = 90;
 
     if (Math.abs(offsetX) > threshold) {
       const vote = offsetX > 0 ? 'REAL' : 'FAKE';
 
-      // 🔥 smooth exit
-      setOffsetX(offsetX > 0 ? 500 : -500);
+      // 🔥 smooth swipe out
+      setOffsetX(offsetX > 0 ? 400 : -400);
 
-      setTimeout(() => handleInteraction(vote), 120);
+      setTimeout(() => handleInteraction(vote), 100);
     } else {
       setOffsetX(0);
     }
@@ -83,8 +84,8 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
       <div
         className="relative will-change-transform"
         style={{
-          transform: `translateX(${offsetX}px) rotate(${rotate}deg)`,
-          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+          transform: `translate3d(${offsetX}px, 0, 0) rotate(${rotate}deg)`,
+          transition: isDragging ? 'none' : 'transform 0.18s ease-out'
         }}
 
         onTouchStart={(e) => handleStart(e.touches[0].clientX)}
@@ -117,14 +118,26 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
         <div className="bg-white border-4 border-black rounded-xl overflow-hidden shadow-neo">
 
           {/* IMAGE */}
-          <div className="h-64 bg-gray-200">
+          <div className="h-64 relative overflow-hidden bg-gray-200">
+
+            {/* 🔥 skeleton (no blank flash) */}
+            {!loaded && (
+              <div className="absolute inset-0 animate-pulse bg-gray-300" />
+            )}
+
             <img
               src={imgSrc}
               alt=""
+              loading="eager"
+              decoding="async"
+              onLoad={() => setLoaded(true)}
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "/placeholder.png";
+                setLoaded(true);
               }}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-all duration-300 ${
+                loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+              }`}
             />
           </div>
 
