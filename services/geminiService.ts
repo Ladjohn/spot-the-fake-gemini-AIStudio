@@ -2,8 +2,11 @@ import { NewsItem } from '../types';
 
 const ENDPOINT = '/api/openrouter';
 
-// 🔥 CACHE (instant feel)
+// 🔥 ROUND CACHE (instant next round)
 let cachedRound: NewsItem[] | null = null;
+
+// 🔥 IMAGE CACHE (prevents refetching same queries)
+const imageCache = new Map<string, string>();
 
 async function askLLM(payload: any) {
   const res = await fetch(ENDPOINT, {
@@ -15,13 +18,32 @@ async function askLLM(payload: any) {
   return res.json();
 }
 
-// 🔥 IMAGE FETCH (Unsplash)
+// 🔥 PRELOAD IMAGE (critical for instant feel)
+function preloadImage(src: string): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+  });
+}
+
+// 🔥 IMAGE FETCH (FAST + OPTIMIZED)
 async function fetchImage(query: string): Promise<string> {
   try {
-    const keyword = query.split(" ").slice(0, 3).join(" ");
+    // 🔥 check cache first
+    if (imageCache.has(query)) {
+      return imageCache.get(query)!;
+    }
+
+    const keyword = query
+      .split(" ")
+      .slice(0, 3)
+      .join(" ")
+      .replace(/[^\w\s]/gi, "");
 
     const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&per_page=1`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&per_page=1&orientation=landscape`,
       {
         headers: {
           Authorization: `Client-ID ${import.meta.env.VITE_UNSPLASH_ACCESS_KEY}`
@@ -30,7 +52,21 @@ async function fetchImage(query: string): Promise<string> {
     );
 
     const data = await res.json();
-    return data?.results?.[0]?.urls?.regular || "/placeholder.png";
+
+    let url = data?.results?.[0]?.urls?.small;
+
+    if (url) {
+      // 🔥 compress + modern format
+      url = `${url}&q=70&fm=webp`;
+    } else {
+      url = "/placeholder.png";
+    }
+
+    // 🔥 cache result
+    imageCache.set(query, url);
+
+    return url;
+
   } catch {
     return "/placeholder.png";
   }
@@ -78,22 +114,34 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
     const parsed = safeParse(content);
     if (!parsed) throw new Error("Parse failed");
 
-    // 🔥 attach images
-    const formatted = await Promise.all(
-      parsed.map(async (item: any, i: number) => {
-        const headline = item.headline || "No headline";
-        const imageUrl = await fetchImage(headline);
+    // 🔥 STEP 1: create base items (no blocking)
+    const baseItems = parsed.map((item: any, i: number) => {
+      const headline = item.headline || "No headline";
 
-        return {
-          id: `${Date.now()}-${i}`,
-          title: headline,
-          headline,
-          type: item.type === "FAKE" ? "FAKE" : "REAL",
-          imageUrl
-        };
-      })
+      return {
+        id: `${Date.now()}-${i}`,
+        title: headline,
+        headline,
+        type: item.type === "FAKE" ? "FAKE" : "REAL",
+        imageUrl: "" // fill later
+      };
+    });
+
+    // 🔥 STEP 2: fetch ALL images in parallel
+    const imageUrls = await Promise.all(
+      baseItems.map(item => fetchImage(item.headline))
     );
 
+    // 🔥 STEP 3: attach images
+    const formatted = baseItems.map((item, i) => ({
+      ...item,
+      imageUrl: imageUrls[i]
+    }));
+
+    // 🔥 STEP 4: preload ALL images in parallel
+    await Promise.all(formatted.map(item => preloadImage(item.imageUrl)));
+
+    // 🔥 cache for instant next round
     cachedRound = formatted;
 
     return formatted.slice(0, count);
@@ -113,9 +161,10 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
   }
 }
 
-// 🔥 PRELOAD
+// 🔥 PRELOAD NEXT ROUND (runs in background)
 export async function preloadRound() {
   try {
-    cachedRound = await generateQuizRound(5);
+    const next = await generateQuizRound(5);
+    cachedRound = next;
   } catch {}
 }
