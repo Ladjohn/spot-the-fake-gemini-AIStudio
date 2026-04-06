@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NewsItem } from '../types';
-import { speakHeadline } from '../services/audioService';
-import { ICONS } from '../constants';
+import { playSound } from '../services/audioService';
 
 interface GameCardProps {
   item: NewsItem;
@@ -10,63 +9,73 @@ interface GameCardProps {
 }
 
 const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
-  const [speaking, setSpeaking] = useState(false);
-
   const [imgSrc, setImgSrc] = useState(
-    item?.imageUrl && item.imageUrl !== "" ? item.imageUrl : "/placeholder.png"
+    item?.imageUrl || "/placeholder.png"
   );
 
   const [offsetX, setOffsetX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const hasVoted = useRef(false);
   const startX = useRef(0);
 
   useEffect(() => {
-    setImgSrc(item?.imageUrl && item.imageUrl !== "" ? item.imageUrl : "/placeholder.png");
+    setImgSrc(item?.imageUrl || "/placeholder.png");
+    setOffsetX(0);
+    hasVoted.current = false; // 🔥 reset per card
   }, [item]);
 
   const handleInteraction = (type: 'REAL' | 'FAKE') => {
-    if (disabled) return;
+    if (disabled || hasVoted.current) return;
 
-    // 🔥 better haptic
-    if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+    hasVoted.current = true;
+
+    // 🔥 haptic + sound
+    navigator.vibrate?.([10, 30, 10]);
+    playSound(type === 'REAL' ? 'SUCCESS' : 'ERROR');
 
     onVote(type);
   };
 
-  // 🔥 SWIPE IMPROVED
+  // 🔥 swipe start
   const handleStart = (clientX: number) => {
-    if (disabled) return;
+    if (disabled || hasVoted.current) return;
     setIsDragging(true);
     startX.current = clientX;
   };
 
+  // 🔥 swipe move (smoothed)
   const handleMove = (clientX: number) => {
-    if (!isDragging || disabled) return;
-    setOffsetX(clientX - startX.current);
+    if (!isDragging || disabled || hasVoted.current) return;
+
+    const delta = clientX - startX.current;
+
+    // 🔥 limit max drag (prevents crazy jumps)
+    const clamped = Math.max(-200, Math.min(200, delta));
+    setOffsetX(clamped);
   };
 
   const handleEnd = () => {
-    if (!isDragging) return;
+    if (!isDragging || hasVoted.current) return;
 
     setIsDragging(false);
 
-    const threshold = 120;
+    const threshold = 100;
 
     if (Math.abs(offsetX) > threshold) {
       const vote = offsetX > 0 ? 'REAL' : 'FAKE';
 
-      // 🔥 smooth exit animation
-      setOffsetX(offsetX > 0 ? 1000 : -1000);
+      // 🔥 smooth exit
+      setOffsetX(offsetX > 0 ? 500 : -500);
 
-      setTimeout(() => handleInteraction(vote), 150);
+      setTimeout(() => handleInteraction(vote), 120);
     } else {
       setOffsetX(0);
     }
   };
 
   const rotate = offsetX * 0.05;
-  const opacityReal = Math.max(0, Math.min(1, offsetX / 120));
-  const opacityFake = Math.max(0, Math.min(1, -offsetX / 120));
+  const opacityReal = Math.max(0, Math.min(1, offsetX / 100));
+  const opacityFake = Math.max(0, Math.min(1, -offsetX / 100));
 
   return (
     <div className="w-full max-w-md mx-auto my-4 relative select-none">
@@ -75,7 +84,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
         className="relative will-change-transform"
         style={{
           transform: `translateX(${offsetX}px) rotate(${rotate}deg)`,
-          transition: isDragging ? 'none' : 'transform 0.25s ease-out'
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
         }}
 
         onTouchStart={(e) => handleStart(e.touches[0].clientX)}
@@ -88,7 +97,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
         onMouseLeave={handleEnd}
       >
 
-        {/* REAL overlay */}
+        {/* REAL */}
         <div
           className="absolute inset-0 z-20 bg-g-green/80 flex items-center justify-center rounded-xl border-4 border-black pointer-events-none"
           style={{ opacity: opacityReal }}
@@ -96,7 +105,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
           <span className="text-white font-black text-5xl">REAL</span>
         </div>
 
-        {/* FAKE overlay */}
+        {/* FAKE */}
         <div
           className="absolute inset-0 z-20 bg-g-red/80 flex items-center justify-center rounded-xl border-4 border-black pointer-events-none"
           style={{ opacity: opacityFake }}
@@ -112,6 +121,9 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
             <img
               src={imgSrc}
               alt=""
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder.png";
+              }}
               className="w-full h-full object-cover"
             />
           </div>
@@ -126,7 +138,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
               <button
                 onClick={() => handleInteraction('FAKE')}
                 disabled={disabled}
-                className="py-3 bg-g-red text-white font-black rounded active:scale-95 transition-transform"
+                className="py-3 bg-g-red text-white font-black rounded active:scale-90 active:brightness-110 transition-all"
               >
                 FAKE
               </button>
@@ -134,7 +146,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled }) => {
               <button
                 onClick={() => handleInteraction('REAL')}
                 disabled={disabled}
-                className="py-3 bg-g-green text-white font-black rounded active:scale-95 transition-transform"
+                className="py-3 bg-g-green text-white font-black rounded active:scale-90 active:brightness-110 transition-all"
               >
                 REAL
               </button>
