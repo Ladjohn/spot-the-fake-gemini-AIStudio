@@ -2,7 +2,7 @@ import { NewsItem } from '../types';
 
 const ENDPOINT = '/api/openrouter';
 
-// ✅ FIXED MODEL (correct + stable)
+// ✅ Stable HF model
 const MODEL = 'hf/meta-llama/Meta-Llama-3-8B-Instruct';
 
 async function askLLM(payload: any) {
@@ -15,17 +15,21 @@ async function askLLM(payload: any) {
   return res.json();
 }
 
+// 🔥 STRONG PARSER (fixes blank content issue)
 function safeParse(raw: string) {
   try {
     return JSON.parse(raw);
   } catch {
-    const start = raw.indexOf("[");
-    const end = raw.lastIndexOf("]");
-    if (start !== -1 && end !== -1) {
-      return JSON.parse(raw.slice(start, end + 1));
-    }
+    try {
+      const match = raw.match(/\[\s*{[\s\S]*}\s*\]/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+    } catch {}
+
+    console.error("PARSE FAILED RAW:", raw);
+    return null;
   }
-  return null;
 }
 
 // 🔥 MAIN GAME GENERATOR
@@ -33,7 +37,7 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
   try {
     let res;
 
-    // ✅ Retry once (fix HF cold start)
+    // ✅ Retry (HF cold start fix)
     try {
       res = await askLLM({
         model: MODEL,
@@ -47,7 +51,8 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
             content: `
 Generate ${count} tricky viral news items.
 
-Format:
+Return ONLY JSON array.
+
 [
   {
     "headline": "...",
@@ -71,7 +76,8 @@ Format:
             content: `
 Generate ${count} tricky viral news items.
 
-Format:
+Return ONLY JSON array.
+
 [
   {
     "headline": "...",
@@ -86,21 +92,24 @@ Format:
 
     let content = "";
 
-    // ✅ OpenAI/OpenRouter format
+    // ✅ Handle OpenAI-style response
     if (res?.choices?.[0]?.message?.content) {
       content = res.choices[0].message.content;
     }
 
-    // ❗ HF error handling
+    // ❗ HF sometimes returns raw text
+    else if (typeof res === "string") {
+      content = res;
+    }
+
+    // ❗ HF error
     else if (res?.error) {
       console.error("HF Error:", res.error);
       throw new Error(res.error);
     }
 
-    // ❗ Raw fallback
-    else if (typeof res === "string") {
-      content = res;
-    }
+    // 🔥 IMPORTANT DEBUG (NOW CORRECT POSITION)
+    console.log("LLM RAW CONTENT:", content);
 
     if (!content) throw new Error("No content from model");
 
@@ -110,7 +119,7 @@ Format:
 
     return parsed.map((item: any, i: number) => ({
       id: `${Date.now()}-${i}`,
-      title: item.headline,
+      title: item.headline || "No headline",
       type: item.type === "FAKE" ? "FAKE" : "REAL"
     }));
 
@@ -124,7 +133,7 @@ Format:
   }
 }
 
-// ✅ 🔥 ADD THIS (fixes your build error)
+// ✅ Fix build dependency
 export function preloadRound() {
   return;
 }
