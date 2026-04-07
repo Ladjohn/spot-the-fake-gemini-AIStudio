@@ -245,10 +245,16 @@ const App: React.FC = () => {
     setLoading(false);
   }, [currentIndex, quizItems.length]);
 
+  // ── Skip question
+  const skipQuestion = () => {
+    playSound('CLICK');
+    nextQuestion();
+  };
+
   // ── Auto-advance when ANALYSIS — always uses fresh nextQuestion via effect
   useEffect(() => {
     if (gameState.status !== 'ANALYSIS') return;
-    const t = setTimeout(() => { nextQuestion(); }, 700);
+    const t = setTimeout(() => { nextQuestion(); }, 2500); // Increased time to read analysis
     return () => clearTimeout(t);
   }, [gameState.status, nextQuestion]);
 
@@ -260,9 +266,10 @@ const App: React.FC = () => {
   const currentItem = quizItems[currentIndex];
   const isUrgent = timeLeft <= 8;
   const totalItems = quizItems.length || 5;
+  const timerPercentage = (timeLeft / GAME_CONFIG.TIMER_SECONDS) * 100;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#fefcf0', display: 'flex', flexDirection: 'column' }}>
       {/* Analysis Modal */}
       {gameState.status === 'ANALYSIS' && currentItem && userGuess && (
         <AnalysisModal
@@ -275,92 +282,80 @@ const App: React.FC = () => {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header style={{
         background: '#fff',
-        padding: '10px 16px',
+        padding: '12px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid #eee',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+        borderBottom: '3px solid #000',
       }}>
         {/* SF Logo */}
         <div style={{
-          width: 36, height: 36, background: '#3B7FF5', borderRadius: 8,
+          width: 40, height: 40, background: '#3B7FF5', borderRadius: 8,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transform: 'rotate(-5deg)', flexShrink: 0
+          transform: 'rotate(-5deg)', flexShrink: 0, border: '2px solid #000'
         }}>
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 12, letterSpacing: 0.5 }}>SF</span>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 14, letterSpacing: 0.5 }}>SF</span>
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'flex', gap: 28, flex: 1, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 32, flex: 1, justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#aaa', letterSpacing: 1.5 }}>STREAK</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: '#111', lineHeight: 1 }}>{gameState.streak}</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#000', lineHeight: 1 }}>{gameState.streak}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#aaa', letterSpacing: 1.5 }}>SCORE</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
           </div>
         </div>
 
-        {/* Sound + Timer circles */}
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {/* Sound toggle */}
+        {/* Sound + Settings */}
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
           <button
             onClick={toggleSound}
+            className="neo-border neo-shadow-sm neo-button"
             style={{
-              width: 36, height: 36, borderRadius: '50%',
+              width: 40, height: 40, borderRadius: '50%',
               background: soundOn ? '#2DBD6E' : '#ccc',
-              border: 'none', cursor: 'pointer',
+              cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', transition: 'background 0.2s'
+              color: '#fff'
             }}
-            aria-label="Toggle sound"
           >
-            {soundOn ? (
-              <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" strokeWidth="0"/>
-              </svg>
-            ) : (
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-              </svg>
-            )}
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+            </svg>
           </button>
-
-          {/* Timer circle */}
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: isUrgent ? '#E53E3E' : '#F5C518',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 0.3s'
+          <div className="neo-border neo-shadow-sm" style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: '#F5C518',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <span style={{ fontWeight: 900, fontSize: 13, color: isUrgent ? '#fff' : '#111' }}>
-              {timeLeft}
-            </span>
+            <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #000' }} />
           </div>
         </div>
       </header>
 
       {/* ── Round + Lives row ───────────────────────────────────────── */}
       <div style={{
-        padding: '10px 16px',
+        padding: '12px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
-        <div style={{
-          background: '#111', color: '#fff',
-          fontWeight: 800, fontSize: 12, letterSpacing: 1,
-          padding: '5px 12px', borderRadius: 20
+        <div className="neo-border" style={{
+          background: '#000', color: '#fff',
+          fontWeight: 900, fontSize: 12, letterSpacing: 1.5,
+          padding: '6px 14px', borderRadius: 4,
+          textTransform: 'uppercase'
         }}>
           ROUND {currentIndex + 1}/{totalItems}
         </div>
 
         {/* Lives as dots */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
               key={i}
+              className="neo-border"
               style={{
-                width: 12, height: 12, borderRadius: '50%',
+                width: 14, height: 14, borderRadius: '50%',
                 background: i < gameState.lives ? '#E53E3E' : '#ddd',
                 transition: 'background 0.3s'
               }}
@@ -369,18 +364,8 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Streak banner ───────────────────────────────────────────── */}
-      {gameState.streak >= 3 && (
-        <div style={{
-          textAlign: 'center', fontWeight: 900, fontSize: 14,
-          color: '#E97316', marginBottom: 4
-        }}>
-          🔥 {gameState.streak} STREAK!
-        </div>
-      )}
-
       {/* ── Card area ───────────────────────────────────────────────── */}
-      <div style={{ flex: 1, padding: '4px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ flex: 1, padding: '0px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {currentItem ? (
           <GameCard
             item={currentItem}
@@ -389,8 +374,65 @@ const App: React.FC = () => {
             difficulty={gameState.difficulty}
           />
         ) : (
-          <div style={{ marginTop: 40, fontSize: 16, color: '#888' }}>Loading next round…</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#000' }}>LOADING...</div>
         )}
+      </div>
+
+      {/* ── Bottom Bar (Timer + Skip) ────────────────────────────────── */}
+      <div style={{
+        padding: '16px',
+        background: '#fff',
+        borderTop: '3px solid #000',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16
+      }}>
+        {/* Timer Bar */}
+        <div className="neo-border" style={{
+          flex: 1,
+          height: 32,
+          background: '#fff',
+          borderRadius: 16,
+          overflow: 'hidden',
+          position: 'relative'
+        }}>
+          <div style={{
+            width: `${timerPercentage}%`,
+            height: '100%',
+            background: isUrgent ? '#E53E3E' : '#3B7FF5',
+            transition: 'width 1s linear, background 0.3s'
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 900, color: timerPercentage < 55 ? '#000' : '#fff',
+            letterSpacing: 0.5
+          }}>
+            <span style={{ marginRight: 4 }}>🕒</span> {timeLeft}s
+          </div>
+        </div>
+
+        {/* Skip Button */}
+        <button
+          onClick={skipQuestion}
+          className="neo-border neo-shadow-sm neo-button"
+          style={{
+            padding: '0 20px',
+            height: 40,
+            background: '#fff',
+            color: '#000',
+            fontWeight: 900,
+            fontSize: 14,
+            letterSpacing: 1,
+            borderRadius: 8,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <span style={{ fontSize: 16 }}>»</span> SKIP
+        </button>
       </div>
     </div>
   );

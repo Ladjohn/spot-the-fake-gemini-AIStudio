@@ -10,7 +10,7 @@ interface GameCardProps {
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  Science:  { bg: '#F5C518', text: '#111' },
+  Science:  { bg: '#F5C518', text: '#000' },
   Tech:     { bg: '#3B7FF5', text: '#fff' },
   Politics: { bg: '#9B51E0', text: '#fff' },
   Culture:  { bg: '#FF6B35', text: '#fff' },
@@ -18,9 +18,9 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 const DIFFICULTY_COLORS: Record<string, { bg: string; text: string }> = {
-  Easy:   { bg: '#2DBD6E', text: '#fff' },
-  Medium: { bg: '#111', text: '#fff' },
-  Hard:   { bg: '#E53E3E', text: '#fff' },
+  Easy:   { bg: '#fff', text: '#000' },
+  Medium: { bg: '#fff', text: '#000' },
+  Hard:   { bg: '#fff', text: '#000' },
 };
 
 const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty }) => {
@@ -78,7 +78,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
   const category = (item as any).category as string | undefined;
   const catStyle = category && CATEGORY_COLORS[category]
     ? CATEGORY_COLORS[category]
-    : { bg: '#F5C518', text: '#111' };
+    : { bg: '#F5C518', text: '#000' };
   const diffStyle = DIFFICULTY_COLORS[difficulty] || DIFFICULTY_COLORS.Medium;
 
   return (
@@ -108,7 +108,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
             background: 'rgba(45,189,110,0.85)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: 16, opacity: opacityReal, pointerEvents: 'none',
-            border: '3px solid #fff'
+            border: '3px solid #000'
           }}
         >
           <span style={{ color: '#fff', fontWeight: 900, fontSize: 48 }}>REAL</span>
@@ -121,22 +121,20 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
             background: 'rgba(229,62,62,0.85)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: 16, opacity: opacityFake, pointerEvents: 'none',
-            border: '3px solid #fff'
+            border: '3px solid #000'
           }}
         >
           <span style={{ color: '#fff', fontWeight: 900, fontSize: 48 }}>FAKE</span>
         </div>
 
         {/* Card */}
-        <div style={{
+        <div className="neo-card" style={{
           background: '#fff',
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
-          border: '1.5px solid #e8e8e8'
         }}>
           {/* Image section */}
-          <div style={{ position: 'relative', height: 200, background: '#ddd', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: 240, background: '#ddd', overflow: 'hidden', borderBottom: '3px solid #000' }}>
             {!loaded && (
               <div style={{
                 position: 'absolute', inset: 0,
@@ -163,37 +161,36 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
             />
 
             {/* Difficulty badge */}
-            <div style={{
+            <div className="neo-border neo-shadow-sm" style={{
               position: 'absolute', top: 12, left: 12,
               background: diffStyle.bg, color: diffStyle.text,
               fontWeight: 800, fontSize: 11, letterSpacing: 1,
-              padding: '4px 10px', borderRadius: 6,
+              padding: '4px 12px', borderRadius: 4,
               textTransform: 'uppercase'
             }}>
               {difficulty}
             </div>
 
             {/* Category badge */}
-            {category && (
-              <div style={{
-                position: 'absolute', top: 12, right: 12,
-                background: catStyle.bg, color: catStyle.text,
-                fontWeight: 800, fontSize: 11, letterSpacing: 1,
-                padding: '4px 10px', borderRadius: 6,
-                textTransform: 'uppercase'
-              }}>
-                {category}
-              </div>
-            )}
+            <div className="neo-border neo-shadow-sm" style={{
+              position: 'absolute', top: 12, right: 12,
+              background: catStyle.bg, color: catStyle.text,
+              fontWeight: 800, fontSize: 11, letterSpacing: 1,
+              padding: '4px 12px', borderRadius: 4,
+              textTransform: 'uppercase'
+            }}>
+              {category || 'SCIENCE'}
+            </div>
           </div>
 
           {/* Content section */}
-          <div style={{ padding: '16px 16px 20px' }}>
+          <div style={{ padding: '20px 20px 24px' }}>
             {/* Headline row */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
               <h2 style={{
                 flex: 1, margin: 0,
-                fontWeight: 800, fontSize: 18, lineHeight: 1.3, color: '#111'
+                fontWeight: 900, fontSize: 22, lineHeight: 1.2, color: '#000',
+                fontFamily: 'Space Grotesk, sans-serif'
               }}>
                 {item.headline || (item as any).title}
               </h2>
@@ -207,17 +204,18 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
                     window.speechSynthesis.speak(u);
                   }
                 }}
+                className="neo-border neo-shadow-sm neo-button"
                 style={{
-                  flexShrink: 0, width: 34, height: 34,
-                  border: '1.5px solid #ddd', borderRadius: '50%',
+                  flexShrink: 0, width: 40, height: 40,
+                  borderRadius: '50%',
                   background: '#fff', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#666'
+                  color: '#000'
                 }}
                 aria-label="Read headline aloud"
               >
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                     d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />
                 </svg>
               </button>
@@ -226,35 +224,33 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
             {/* Summary with blue left border */}
             {(item.summary || (item as any).description) && (
               <div style={{
-                borderLeft: '3px solid #3B7FF5',
-                paddingLeft: 12,
-                marginBottom: 16,
-                color: '#555',
-                fontSize: 14,
-                lineHeight: 1.5
+                borderLeft: '4px solid #3B7FF5',
+                paddingLeft: 16,
+                marginBottom: 24,
+                color: '#333',
+                fontSize: 15,
+                lineHeight: 1.6,
+                fontWeight: 500
               }}>
                 {item.summary || (item as any).description}
               </div>
             )}
 
             {/* Vote buttons */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 8 }}>
               <button
                 onClick={() => handleInteraction('FAKE')}
                 disabled={disabled}
+                className="neo-border neo-shadow neo-button"
                 style={{
-                  padding: '14px 0',
-                  background: disabled ? '#f5a0a0' : '#E53E3E',
+                  padding: '16px 0',
+                  background: '#E53E3E',
                   color: '#fff',
-                  fontWeight: 900, fontSize: 16, letterSpacing: 1,
-                  border: 'none', borderRadius: 12,
+                  fontWeight: 900, fontSize: 18, letterSpacing: 1.5,
+                  borderRadius: 12,
                   cursor: disabled ? 'not-allowed' : 'pointer',
-                  transition: 'transform 0.1s, brightness 0.1s',
-                  transform: 'scale(1)'
+                  opacity: disabled ? 0.7 : 1
                 }}
-                onMouseDown={e => !disabled && (e.currentTarget.style.transform = 'scale(0.95)')}
-                onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 FAKE!
               </button>
@@ -262,19 +258,16 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
               <button
                 onClick={() => handleInteraction('REAL')}
                 disabled={disabled}
+                className="neo-border neo-shadow neo-button"
                 style={{
-                  padding: '14px 0',
-                  background: disabled ? '#7fd8a6' : '#2DBD6E',
+                  padding: '16px 0',
+                  background: '#2DBD6E',
                   color: '#fff',
-                  fontWeight: 900, fontSize: 16, letterSpacing: 1,
-                  border: 'none', borderRadius: 12,
+                  fontWeight: 900, fontSize: 18, letterSpacing: 1.5,
+                  borderRadius: 12,
                   cursor: disabled ? 'not-allowed' : 'pointer',
-                  transition: 'transform 0.1s',
-                  transform: 'scale(1)'
+                  opacity: disabled ? 0.7 : 1
                 }}
-                onMouseDown={e => !disabled && (e.currentTarget.style.transform = 'scale(0.95)')}
-                onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
               >
                 REAL!
               </button>
