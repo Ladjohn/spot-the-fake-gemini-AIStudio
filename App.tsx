@@ -6,6 +6,7 @@ import { NewsItem, QuizState } from './types';
 import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
 import AnalysisModal from './components/AnalysisModal';
+import Scoreboard from './components/Scoreboard';
 import { getHighScore, setHighScore } from './utils/storage';
 
 // ─── Loading ───────────────────────────────────────────────────────────────
@@ -126,8 +127,10 @@ const App: React.FC = () => {
   // ── Preload on mount and start music
   useEffect(() => { 
     preloadRound();
-    startMusic();
-  }, []);
+    if (soundOn) {
+      startMusic();
+    }
+  }, [soundOn]);
 
   // ── Save high score when game ends
   useEffect(() => {
@@ -135,8 +138,10 @@ const App: React.FC = () => {
       const saved = getHighScore();
       if (gameState.score > saved) {
         setHighScore(gameState.score);
+        playSound('WIN');
+      } else {
+        playSound('GAMEOVER');
       }
-      playSound('GAMEOVER');
     }
   }, [gameState.status]);
 
@@ -177,21 +182,26 @@ const App: React.FC = () => {
     if (soundOn) { stopMusic(); }
     else { startMusic(); }
     setSoundOn(prev => !prev);
+    playSound('CLICK');
   };
 
   // ── Theme toggle
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
+    playSound('CLICK');
   };
 
   // ── Start game
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
     playSound('CLICK');
     setLoading(true);
+    setUserGuess(null);
+    setTimeLeft(GAME_CONFIG.TIMER_SECONDS);
     setGameState(prev => ({
       ...prev, score: 0, streak: 0,
       lives: GAME_CONFIG.MAX_LIVES,
-      status: 'PLAYING', difficulty
+      status: 'PLAYING', difficulty,
+      totalRoundsPlayed: 0
     }));
     try {
       const items = await Promise.race([
@@ -225,6 +235,7 @@ const App: React.FC = () => {
       const newScore = prev.score + (isCorrect ? 100 + bonus : 0);
       return {
         ...prev, score: newScore, streak: newStreak, lives: newLives,
+        totalRoundsPlayed: prev.totalRoundsPlayed + 1,
         status: willGameOver ? 'GAME_OVER' : 'ANALYSIS'
       };
     });
@@ -238,34 +249,63 @@ const App: React.FC = () => {
       setGameState(prev => ({ ...prev, status: 'PLAYING' }));
       return;
     }
+    // Load next round of questions
     setLoading(true);
     try {
       const nextItems = await generateQuizRound(5);
       setQuizItems(nextItems.length ? nextItems : fallbackItems);
       setCurrentIndex(0);
       preloadRound();
+      setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     } catch {
       setQuizItems(fallbackItems);
+      setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     }
-    setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     setLoading(false);
   }, [currentIndex, quizItems.length]);
 
   // ── Skip question
   const skipQuestion = () => {
     playSound('CLICK');
+    setUserGuess(null);
     nextQuestion();
   };
 
   // ── Auto-advance when ANALYSIS — always uses fresh nextQuestion via effect
   useEffect(() => {
     if (gameState.status !== 'ANALYSIS') return;
-    const t = setTimeout(() => { nextQuestion(); }, 2500); // Increased time to read analysis
+    const t = setTimeout(() => { nextQuestion(); }, 3000); // Time to read analysis
     return () => clearTimeout(t);
   }, [gameState.status, nextQuestion]);
 
   if (loading) return <LoadingScreen />;
-  if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
+  
+  // Show scoreboard on game over
+  if (gameState.status === 'GAME_OVER') {
+    const previousHighScore = getHighScore();
+    const isNewBest = gameState.score > previousHighScore;
+    
+    return (
+      <Scoreboard
+        finalScore={gameState.score}
+        highScore={previousHighScore}
+        streak={gameState.streak}
+        totalRoundsPlayed={currentIndex + 1}
+        isNewBest={isNewBest}
+        isDarkMode={isDarkMode}
+        onPlayAgain={() => {
+          playSound('CLICK');
+          startGame(gameState.difficulty);
+        }}
+        onBackToMenu={() => {
+          playSound('CLICK');
+          setGameState(prev => ({ ...prev, status: 'IDLE' }));
+        }}
+      />
+    );
+  }
+  
+  if (gameState.status === 'IDLE') {
     return <StartScreen onStart={startGame} />;
   }
 
@@ -273,6 +313,8 @@ const App: React.FC = () => {
   const isUrgent = timeLeft <= 8;
   const totalItems = quizItems.length || 5;
   const timerPercentage = (timeLeft / GAME_CONFIG.TIMER_SECONDS) * 100;
+  const previousHighScore = getHighScore();
+  const isNewBest = gameState.score > previousHighScore;
 
   // Theme colors
   const bgColor = isDarkMode ? '#1a1a1a' : '#fefcf0';
@@ -283,7 +325,7 @@ const App: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: bgColor, display: 'flex', flexDirection: 'column', color: textColor }}>
       {/* Analysis Modal */}
-      {gameState.status === 'ANALYSIS' && currentItem && userGuess && (
+      {gameState.status === 'ANALYSIS' && currentItem && userGuess && gameState.status !== 'GAME_OVER' && (
         <AnalysisModal
           item={currentItem}
           userGuess={userGuess}
@@ -332,7 +374,7 @@ const App: React.FC = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff',
               position: 'relative',
-              transition: 'background 0.3s'
+              transition: 'all 0.2s'
             }}
           >
             {soundOn ? (
@@ -360,7 +402,7 @@ const App: React.FC = () => {
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#000',
-              transition: 'background 0.3s'
+              transition: 'all 0.2s'
             }}
           >
             {isDarkMode ? (
@@ -376,7 +418,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* ── Round + Lives row ─────────────────────────────────────────────────── */}
+        {/* ── Round + Lives row ──────────────────────────────────────── */}
       <div style={{
         padding: '12px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -390,7 +432,7 @@ const App: React.FC = () => {
           textTransform: 'uppercase'
         }}>
           ROUND {currentIndex + 1}/{totalItems}
-          {/* Lives as dots */}
+        </div        {/* Lives as dots */}
         <div style={{ display: 'flex', gap: 8 }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
@@ -399,16 +441,17 @@ const App: React.FC = () => {
               style={{
                 width: 14, height: 14, borderRadius: '50%',
                 background: i < gameState.lives ? '#E53E3E' : isDarkMode ? '#444' : '#ddd',
-                transition: 'background 0.3s'
+                transition: 'background 0.3s',
+                boxShadow: i < gameState.lives ? '2px 2px 0px 0px #000' : 'none'
               }}
             />
           ))}
         </div>
-      </div>div>
+      </div>iv>
 
       {/* ── Card area ─────────────────────────────────────────────────── */}
       <div style={{ flex: 1, padding: '0px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        {currentItem ? (
+        {currentItem && gameState.status === 'PLAYING' ? (
           <GameCard
             item={currentItem}
             onVote={handleVote}
