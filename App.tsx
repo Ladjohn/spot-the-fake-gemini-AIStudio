@@ -22,47 +22,75 @@ const LoadingScreen = () => (
 const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }> = ({ onStart }) => {
   const best = getHighScore();
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5C518' }}>
-      <div style={{ background: '#fff', borderRadius: 28, width: 320, padding: '36px 28px 40px', boxShadow: '0 6px 32px rgba(0,0,0,0.13)' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-          <div style={{
-            width: 64, height: 64, background: '#3B7FF5', borderRadius: 12,
-            transform: 'rotate(-6deg)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', boxShadow: '0 4px 12px rgba(59,127,245,0.35)'
-          }}>
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: 22, letterSpacing: 1 }}>SF</span>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5C518', padding: '20px' }}>
+      {/* Outer yellow border container */}
+      <div style={{ background: '#F5C518', borderRadius: 32, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+        {/* Inner white card */}
+        <div style={{ background: '#fff', borderRadius: 24, width: 340, padding: '48px 32px 44px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)' }}>
+          {/* SF Logo */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+            <div style={{
+              width: 72, height: 72, background: '#3B7FF5', borderRadius: 14,
+              transform: 'rotate(-8deg)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: '0 6px 16px rgba(59,127,245,0.4)', border: '3px solid #1e5cc8'
+            }}>
+              <span style={{ color: '#fff', fontWeight: 900, fontSize: 28, letterSpacing: 1.2 }}>SF</span>
+            </div>
           </div>
+          
+          {/* Title */}
+          <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 44, lineHeight: 1.1, letterSpacing: -1.5, color: '#000', marginBottom: 8, fontFamily: 'Space Grotesk, sans-serif' }}>
+            SPOT<br />THE<br />FAKE
+          </div>
+          
+          {/* Subtitle */}
+          <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 13, color: '#666', marginBottom: 28, letterSpacing: 0.3 }}>
+            Viral News Edition
+          </div>
+          
+          {/* Best Score Box */}
+          <div style={{ border: '2px solid #222', borderRadius: 12, padding: '14px 0', textAlign: 'center', marginBottom: 28, background: '#fafafa' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#666', letterSpacing: 1.8, marginBottom: 4, textTransform: 'uppercase' }}>YOUR BEST</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
+          </div>
+          
+          {/* Difficulty Label */}
+          <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
+            SELECT DIFFICULTY
+          </div>
+          
+          {/* Difficulty Buttons */}
+          {(['Easy', 'Medium', 'Hard'] as const).map(d => (
+            <button
+              key={d}
+              onClick={() => onStart(d)}
+              style={{
+                width: '100%', padding: '16px 0', marginBottom: 12,
+                border: '2px solid #222', borderRadius: 12, background: '#fff',
+                fontWeight: 800, fontSize: 16, letterSpacing: 1.6, color: '#000',
+                cursor: 'pointer', transition: 'all 0.15s ease',
+                fontFamily: 'Inter, sans-serif'
+              }}
+              onMouseDown={e => {
+                e.currentTarget.style.transform = 'scale(0.96)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+              }}
+              onMouseUp={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+              }}
+            >
+              {d.toUpperCase()}
+            </button>
+          ))}
         </div>
-        <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 40, lineHeight: 1.05, letterSpacing: -1, color: '#111', marginBottom: 6 }}>
-          SPOT<br />THE<br />FAKE
-        </div>
-        <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#555', marginBottom: 24, letterSpacing: 0.5 }}>
-          Viral News Edition
-        </div>
-        <div style={{ border: '1.5px solid #e0e0e0', borderRadius: 10, padding: '10px 0', textAlign: 'center', marginBottom: 22 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#888', letterSpacing: 1.5, marginBottom: 2 }}>YOUR BEST</div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
-        </div>
-        <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 2, marginBottom: 12 }}>
-          SELECT DIFFICULTY
-        </div>
-        {(['Easy', 'Medium', 'Hard'] as const).map(d => (
-          <button
-            key={d}
-            onClick={() => onStart(d)}
-            style={{
-              width: '100%', padding: '14px 0', marginBottom: 10,
-              border: '1.5px solid #ddd', borderRadius: 10, background: '#fff',
-              fontWeight: 800, fontSize: 15, letterSpacing: 1.5, color: '#222',
-              cursor: 'pointer'
-            }}
-            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
-            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            {d.toUpperCase()}
-          </button>
-        ))}
       </div>
     </div>
   );
