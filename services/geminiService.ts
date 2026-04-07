@@ -45,8 +45,8 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
   try {
     // ⚡ instant from cache
     if (cachedRound && cachedRound.length >= count) {
-      const data = cachedRound.slice(0, count);
-      cachedRound = null;
+      const data = [...cachedRound.slice(0, count)];
+      cachedRound = null; // Clear cache after use
       return data;
     }
 
@@ -89,9 +89,7 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
       };
     });
 
-    // 🔥 cache next round
-    cachedRound = formatted;
-
+    // 🔥 return formatted items
     return formatted.slice(0, count);
 
   } catch (err) {
@@ -115,7 +113,10 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
 // 🔥 PRELOAD NEXT ROUND
 export async function preloadRound() {
   try {
-    const next = await generateQuizRound(5);
-    cachedRound = next;
+    // Only preload if cache is empty
+    if (!cachedRound) {
+      const next = await generateQuizRound(5);
+      cachedRound = next;
+    }
   } catch {}
 }

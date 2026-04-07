@@ -455,6 +455,7 @@ const App: React.FC = () => {
       <div style={{ flex: 1, padding: '0px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {currentItem && gameState.status === 'PLAYING' ? (
           <GameCard
+            key={currentItem.id}
             item={currentItem}
             onVote={handleVote}
             disabled={gameState.status === 'ANALYSIS'}
