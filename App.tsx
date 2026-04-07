@@ -21,7 +21,7 @@ const LoadingScreen = () => (
       letterSpacing: 1.2,
     }}
   >
-    Emergency broadcast: the fake-or-real reactor is spitting sparks...
+    Meltdown mode: the rumor machine is waking up...
   </div>
 );
 
@@ -120,7 +120,7 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
               minWidth: 118,
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.6, textTransform: 'uppercase' }}>Top Score</div>
+            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.6, textTransform: 'uppercase' }}>Best Score</div>
             <div style={{ fontSize: 34, fontWeight: 900, lineHeight: 1, marginTop: 6 }}>{best}</div>
           </div>
         </div>
@@ -198,7 +198,7 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
             marginBottom: 12,
           }}
         >
-          Choose Your Chaos
+          Pick Your Damage
         </div>
 
         {(
@@ -497,7 +497,7 @@ const App: React.FC = () => {
               padding: '8px 10px',
             }}
           >
-            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>Heat</div>
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>Streak</div>
             <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 4 }}>{gameState.streak}</div>
           </div>
           <div
@@ -599,7 +599,7 @@ const App: React.FC = () => {
             boxShadow: '4px 4px 0 #FF7A00',
           }}
         >
-          Case {currentIndex + 1}/{totalItems}
+          Round {currentIndex + 1}/{totalItems}
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -685,7 +685,7 @@ const App: React.FC = () => {
               textTransform: 'uppercase',
             }}
           >
-            Clock {timeLeft}s
+            Timer {timeLeft}s
           </div>
         </div>
 
@@ -706,7 +706,7 @@ const App: React.FC = () => {
             gap: 6,
           }}
         >
-         <span style={{ fontSize: 16 }}>{'->'}</span> PASS
+          <span style={{ fontSize: 16 }}>{'>>'}</span> SKIP
         </button>
       </div>
     </div>
