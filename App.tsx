@@ -706,7 +706,7 @@ const App: React.FC = () => {
             gap: 6,
           }}
         >
-          <span style={{ fontSize: 16 }}>-></span> PASS
+         <span style={{ fontSize: 16 }}>{'->'}</span> PASS
         </button>
       </div>
     </div>
