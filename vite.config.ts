@@ -22,7 +22,6 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
   return {
-    base: '/spot-the-fake-gemini/',
     server: {
       port: 5000,
       host: '0.0.0.0',
