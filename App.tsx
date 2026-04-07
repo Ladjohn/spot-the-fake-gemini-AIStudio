@@ -17,11 +17,10 @@ const LoadingScreen = () => (
       fontSize: 22,
       fontWeight: 900,
       background: '#F5C518',
-      textTransform: 'uppercase',
-      letterSpacing: 1.2,
+      color: '#000',
     }}
   >
-    Meltdown mode: the rumor machine is waking up...
+    Loading Fake Or Real...
   </div>
 );
 
@@ -35,215 +34,84 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'linear-gradient(135deg, #f7d748 0%, #f7d748 50%, #ff7a00 50%, #ff7a00 100%)',
+        background: '#F5C518',
         padding: '20px',
-        position: 'relative',
-        overflow: 'hidden',
       }}
     >
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage:
-            'repeating-linear-gradient(0deg, transparent 0 34px, rgba(0,0,0,0.09) 34px 38px), repeating-linear-gradient(90deg, transparent 0 34px, rgba(0,0,0,0.09) 34px 38px)',
-          opacity: 0.65,
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div
-        className="neo-start-shell"
-        style={{
-          width: 'min(100%, 420px)',
-          background: '#fffdf7',
-          border: '4px solid #000',
-          boxShadow: '12px 12px 0 #000',
-          padding: '24px',
-          position: 'relative',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: -18,
-            right: 18,
-            background: '#00e0b8',
-            border: '4px solid #000',
-            boxShadow: '6px 6px 0 #000',
-            padding: '8px 12px',
-            transform: 'rotate(6deg)',
-            fontSize: 12,
-            fontWeight: 900,
-            letterSpacing: 1.4,
-            textTransform: 'uppercase',
-          }}
-        >
-          Truth Meltdown
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 16,
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              width: 84,
-              height: 84,
-              background: '#3b7ff5',
-              border: '4px solid #000',
-              boxShadow: '8px 8px 0 #000',
-              transform: 'rotate(-10deg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: 30, letterSpacing: 1.6 }}>F.O.R</span>
-          </div>
-
-          <div
-            style={{
-              background: '#ff5e5b',
-              border: '4px solid #000',
-              boxShadow: '8px 8px 0 #000',
-              padding: '12px 14px',
-              textAlign: 'center',
-              minWidth: 118,
-            }}
-          >
-            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.6, textTransform: 'uppercase' }}>Best Score</div>
-            <div style={{ fontSize: 34, fontWeight: 900, lineHeight: 1, marginTop: 6 }}>{best}</div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            fontFamily: "'Arial Black', 'Space Grotesk', sans-serif",
-            fontSize: 'clamp(3rem, 9vw, 4.5rem)',
-            lineHeight: 0.9,
-            letterSpacing: -2.5,
-            textTransform: 'uppercase',
-            color: '#000',
-            marginBottom: 14,
-          }}
-        >
-          Fake
-          <br />
-          Or Real
-        </div>
-
-        <div
-          style={{
-            display: 'inline-block',
-            background: '#fff',
-            border: '3px solid #000',
-            padding: '8px 12px',
-            boxShadow: '5px 5px 0 #000',
-            transform: 'rotate(-2deg)',
-            marginBottom: 20,
-            fontSize: 14,
-            fontWeight: 800,
-            lineHeight: 1.3,
-          }}
-        >
-          Swipe through absurd headlines.
-          <br />
-          Trust your gut. Break the streak if you blink.
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 10,
-            marginBottom: 20,
-          }}
-        >
-          {[
-            { label: 'Rounds', value: '5', bg: '#f7d748' },
-            { label: 'Lives', value: `${GAME_CONFIG.MAX_LIVES}`, bg: '#00e0b8' },
-            { label: 'Mood', value: 'Chaos', bg: '#9f7aea' },
-          ].map(item => (
+      <div style={{ background: '#F5C518', borderRadius: 32, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+        <div style={{ background: '#fff', borderRadius: 24, width: 340, padding: '48px 32px 44px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
             <div
-              key={item.label}
               style={{
-                background: item.bg,
-                border: '3px solid #000',
-                padding: '10px 8px',
-                textAlign: 'center',
-                boxShadow: '4px 4px 0 #000',
+                width: 72,
+                height: 72,
+                background: '#3B7FF5',
+                borderRadius: 14,
+                transform: 'rotate(-8deg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 6px 16px rgba(59,127,245,0.4)',
+                border: '3px solid #1e5cc8',
               }}
             >
-              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>{item.label}</div>
-              <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 6 }}>{item.value}</div>
+              <span style={{ color: '#fff', fontWeight: 900, fontSize: 24, letterSpacing: 1 }}>F.O.R</span>
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 900,
-            letterSpacing: 2.2,
-            textTransform: 'uppercase',
-            marginBottom: 12,
-          }}
-        >
-          Pick Your Damage
-        </div>
-
-        {(
-          [
-            { level: 'Easy', accent: '#f7d748', note: 'Warm up your lie detector' },
-            { level: 'Medium', accent: '#3b7ff5', note: 'Balanced chaos' },
-            { level: 'Hard', accent: '#ff5e5b', note: 'Maximum misinformation energy' },
-          ] as const
-        ).map(({ level, accent, note }) => (
-          <button
-            key={level}
-            onClick={() => onStart(level)}
-            className="neo-start-button"
+          <div
             style={{
-              width: '100%',
-              marginBottom: 14,
-              border: '4px solid #000',
-              background: accent,
-              boxShadow: '7px 7px 0 #000',
-              padding: '16px 18px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              fontFamily: "'Trebuchet MS', 'Arial Black', sans-serif",
-              color: level === 'Medium' ? '#fff' : '#000',
-              transition: 'transform 0.12s ease, box-shadow 0.12s ease',
+              textAlign: 'center',
+              fontWeight: 900,
+              fontSize: 42,
+              lineHeight: 1.05,
+              letterSpacing: -1.2,
+              color: '#000',
+              marginBottom: 10,
+              fontFamily: 'Space Grotesk, sans-serif',
             }}
           >
-            <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1.1, textTransform: 'uppercase' }}>{level}</div>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, marginTop: 4 }}>{note}</div>
-          </button>
-        ))}
+            FAKE
+            <br />
+            OR REAL
+          </div>
 
-        <div
-          style={{
-            marginTop: 8,
-            background: '#000',
-            color: '#fff',
-            padding: '10px 12px',
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: 1.2,
-            textTransform: 'uppercase',
-          }}
-        >
-          No fluff. Just bold cards, weird facts, and hard calls.
+          <div style={{ textAlign: 'center', fontSize: 15, color: '#444', marginBottom: 26, lineHeight: 1.4 }}>
+            Pick the right answer and learn the truth behind the headline.
+          </div>
+
+          <div style={{ border: '2px solid #222', borderRadius: 12, padding: '14px 0', textAlign: 'center', marginBottom: 28, background: '#fafafa' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#666', letterSpacing: 1.8, marginBottom: 4, textTransform: 'uppercase' }}>BEST SCORE</div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
+            SELECT DIFFICULTY
+          </div>
+
+          {(['Easy', 'Medium', 'Hard'] as const).map(d => (
+            <button
+              key={d}
+              onClick={() => onStart(d)}
+              style={{
+                width: '100%',
+                padding: '16px 0',
+                marginBottom: 12,
+                border: '2px solid #222',
+                borderRadius: 12,
+                background: d === 'Easy' ? '#fff7cc' : d === 'Medium' ? '#eef4ff' : '#ffe7e7',
+                fontWeight: 800,
+                fontSize: 16,
+                letterSpacing: 1.2,
+                color: '#000',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              {d.toUpperCase()}
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -447,10 +315,10 @@ const App: React.FC = () => {
   const totalItems = quizItems.length || 5;
   const timerPercentage = (timeLeft / GAME_CONFIG.TIMER_SECONDS) * 100;
 
-  const bgColor = isDarkMode ? '#151515' : '#f6f1df';
-  const cardBg = isDarkMode ? '#232323' : '#fffdf7';
+  const bgColor = isDarkMode ? '#1a1a1a' : '#fefcf0';
+  const cardBg = isDarkMode ? '#2a2a2a' : '#fff';
   const textColor = isDarkMode ? '#fff' : '#000';
-  const headerBg = isDarkMode ? '#0b0b0b' : '#fff';
+  const headerBg = isDarkMode ? '#111' : '#fff';
 
   return (
     <div style={{ minHeight: '100vh', background: bgColor, display: 'flex', flexDirection: 'column', color: textColor }}>
@@ -461,58 +329,38 @@ const App: React.FC = () => {
       <header
         style={{
           background: headerBg,
-          padding: '14px 16px',
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 14,
-          borderBottom: '4px solid #000',
+          borderBottom: '3px solid #000',
         }}
       >
         <div
           style={{
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             background: '#3B7FF5',
+            borderRadius: 8,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transform: 'rotate(-7deg)',
+            transform: 'rotate(-5deg)',
             flexShrink: 0,
-            border: '3px solid #000',
-            boxShadow: '5px 5px 0 #000',
+            border: '2px solid #000',
           }}
         >
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 0.8 }}>F.O.R</span>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: 0.4 }}>F.O.R</span>
         </div>
 
-        <div style={{ display: 'flex', gap: 12, flex: 1, justifyContent: 'center' }}>
-          <div
-            style={{
-              minWidth: 86,
-              textAlign: 'center',
-              border: '3px solid #000',
-              background: isDarkMode ? '#1e1e1e' : '#F7D748',
-              boxShadow: '4px 4px 0 #000',
-              padding: '8px 10px',
-            }}
-          >
-            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>Streak</div>
-            <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 4 }}>{gameState.streak}</div>
+        <div style={{ display: 'flex', gap: 32, flex: 1, justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: textColor, lineHeight: 1 }}>{gameState.streak}</div>
           </div>
-          <div
-            style={{
-              minWidth: 96,
-              textAlign: 'center',
-              border: '3px solid #000',
-              background: '#FF7A00',
-              boxShadow: '4px 4px 0 #000',
-              padding: '8px 10px',
-              color: '#000',
-            }}
-          >
-            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>Score</div>
-            <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 4 }}>{gameState.score}</div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
           </div>
         </div>
 
@@ -521,39 +369,27 @@ const App: React.FC = () => {
             onClick={toggleSound}
             className="neo-border neo-shadow-sm neo-button"
             style={{
-              width: 42,
-              height: 42,
-              background: soundOn ? '#2DBD6E' : '#FF5E5B',
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: soundOn ? '#2DBD6E' : '#E53E3E',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
-              position: 'relative',
             }}
           >
-            {soundOn ? (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13.5 4.06c0-1.336-1.616-2.256-2.73-1.72l-5.24 3.102A1 1 0 005 7.25M9 19l-4.773-2.834A1 1 0 003 15.25V8.75a1 1 0 011.227-.96l4.773 2.834M9 19v4m0-11.726v.005" strokeWidth="2" stroke="currentColor" fill="none" />
-              </svg>
-            ) : (
-              <div style={{ position: 'relative', width: 18, height: 18 }}>
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style={{ opacity: 0.3 }}>
-                  <path d="M13.5 4.06c0-1.336-1.616-2.256-2.73-1.72l-5.24 3.102A1 1 0 005 7.25M9 19l-4.773-2.834A1 1 0 003 15.25V8.75a1 1 0 011.227-.96l4.773 2.834M9 19v4m0-11.726v.005" />
-                </svg>
-                <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24" style={{ position: 'absolute', top: 0, left: 0 }}>
-                  <line x1="3" y1="3" x2="21" y2="21" />
-                </svg>
-              </div>
-            )}
+            {soundOn ? '?' : '×'}
           </button>
           <button
             onClick={toggleTheme}
             className="neo-border neo-shadow-sm neo-button"
             style={{
-              width: 42,
-              height: 42,
-              background: '#F7D748',
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: '#F5C518',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -561,74 +397,54 @@ const App: React.FC = () => {
               color: '#000',
             }}
           >
-            {isDarkMode ? (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M21.64 15.89c-.5-.11-1.033.122-1.141.66-.426 2.034-1.671 3.893-3.368 5.12-1.697 1.227-3.802 1.804-5.957 1.604-2.155-.2-4.149-1.17-5.541-2.562-1.392-1.392-2.362-3.386-2.562-5.541-.2-2.155.377-4.26 1.604-5.957 1.227-1.697 3.086-2.942 5.12-3.368.538-.108.77-.641.66-1.141-.11-.5-.641-.77-1.141-.66C5.275 3.71 3.12 5.075 1.71 7.078c-1.41 2.003-2.108 4.495-1.908 6.987.2 2.492.898 4.984 2.308 6.987 1.41 2.003 3.565 3.368 5.92 3.878 2.355.51 4.847.21 7.05-.9 2.203-1.11 4.008-2.975 5.118-5.178.11-.5-.122-1.033-.66-1.141z" />
-              </svg>
-            ) : (
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 18a6 6 0 100-12 6 6 0 000 12zM12 2v4m0 12v4M4.22 4.22l2.83 2.83m8.94 8.94l2.83 2.83M2 12h4m12 0h4M4.22 19.78l2.83-2.83m8.94-8.94l2.83-2.83" stroke="currentColor" strokeWidth="2" fill="none" />
-              </svg>
-            )}
+            {isDarkMode ? '?' : '?'}
           </button>
         </div>
       </header>
 
       <div
         style={{
-          padding: '14px 16px',
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 14,
           background: headerBg,
-          borderBottom: '4px solid #000',
-          flexWrap: 'wrap',
+          borderBottom: isDarkMode ? '1px solid #333' : '1px solid #eee',
         }}
       >
         <div
+          className="neo-border"
           style={{
-            background: '#000',
+            background: isDarkMode ? '#333' : '#000',
             color: '#fff',
             fontWeight: 900,
             fontSize: 12,
-            letterSpacing: 1.6,
-            padding: '8px 14px',
+            letterSpacing: 1.5,
+            padding: '6px 14px',
+            borderRadius: 4,
             textTransform: 'uppercase',
-            border: '3px solid #000',
-            boxShadow: '4px 4px 0 #FF7A00',
           }}
         >
-          Round {currentIndex + 1}/{totalItems}
+          ROUND {currentIndex + 1}/{totalItems}
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
               key={i}
               className="neo-border"
               style={{
-                width: 18,
-                height: 18,
-                background: i < gameState.lives ? '#FF5E5B' : isDarkMode ? '#333' : '#d9d4c7',
-                boxShadow: '2px 2px 0 #000',
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                background: i < gameState.lives ? '#E53E3E' : isDarkMode ? '#444' : '#ddd',
               }}
             />
           ))}
         </div>
       </div>
 
-      <div
-        style={{
-          flex: 1,
-          padding: '22px 16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 18,
-        }}
-      >
+      <div style={{ flex: 1, padding: '0 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {currentItem ? (
           <GameCard
             item={currentItem}
@@ -646,7 +462,7 @@ const App: React.FC = () => {
         style={{
           padding: '16px',
           background: headerBg,
-          borderTop: '4px solid #000',
+          borderTop: '3px solid #000',
           display: 'flex',
           alignItems: 'center',
           gap: 16,
@@ -656,18 +472,18 @@ const App: React.FC = () => {
           className="neo-border"
           style={{
             flex: 1,
-            height: 38,
+            height: 32,
             background: cardBg,
+            borderRadius: 16,
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '4px 4px 0 #000',
           }}
         >
           <div
             style={{
               width: `${timerPercentage}%`,
               height: '100%',
-              background: isUrgent ? '#FF5E5B' : '#3B7FF5',
+              background: isUrgent ? '#E53E3E' : '#3B7FF5',
               transition: 'width 1s linear, background 0.3s',
             }}
           />
@@ -681,11 +497,10 @@ const App: React.FC = () => {
               fontSize: 13,
               fontWeight: 900,
               color: timerPercentage < 55 ? textColor : '#fff',
-              letterSpacing: 1,
-              textTransform: 'uppercase',
+              letterSpacing: 0.5,
             }}
           >
-            Timer {timeLeft}s
+            TIMER {timeLeft}s
           </div>
         </div>
 
@@ -694,12 +509,13 @@ const App: React.FC = () => {
           className="neo-border neo-shadow-sm neo-button"
           style={{
             padding: '0 20px',
-            height: 44,
-            background: '#00E0B8',
-            color: '#000',
+            height: 40,
+            background: cardBg,
+            color: textColor,
             fontWeight: 900,
             fontSize: 14,
-            letterSpacing: 1.2,
+            letterSpacing: 1,
+            borderRadius: 8,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
