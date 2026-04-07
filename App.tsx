@@ -44,10 +44,7 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
             SPOT<br />THE<br />FAKE
           </div>
           
-          {/* Subtitle */}
-          <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 13, color: '#666', marginBottom: 28, letterSpacing: 0.3 }}>
-            Viral News Edition
-          </div>
+
           
           {/* Best Score Box */}
           <div style={{ border: '2px solid #222', borderRadius: 12, padding: '14px 0', textAlign: 'center', marginBottom: 28, background: '#fafafa' }}>
@@ -109,6 +106,7 @@ const App: React.FC = () => {
   const [quizItems, setQuizItems] = useState<NewsItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [timeLeft, setTimeLeft] = useState(GAME_CONFIG.TIMER_SECONDS);
   const [userGuess, setUserGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -125,8 +123,11 @@ const App: React.FC = () => {
     highScore: getHighScore()
   });
 
-  // ── Preload on mount
-  useEffect(() => { preloadRound(); }, []);
+  // ── Preload on mount and start music
+  useEffect(() => { 
+    preloadRound();
+    startMusic();
+  }, []);
 
   // ── Save high score when game ends
   useEffect(() => {
@@ -176,6 +177,11 @@ const App: React.FC = () => {
     if (soundOn) { stopMusic(); }
     else { startMusic(); }
     setSoundOn(prev => !prev);
+  };
+
+  // ── Theme toggle
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
   };
 
   // ── Start game
@@ -268,8 +274,14 @@ const App: React.FC = () => {
   const totalItems = quizItems.length || 5;
   const timerPercentage = (timeLeft / GAME_CONFIG.TIMER_SECONDS) * 100;
 
+  // Theme colors
+  const bgColor = isDarkMode ? '#1a1a1a' : '#fefcf0';
+  const cardBg = isDarkMode ? '#2a2a2a' : '#fff';
+  const textColor = isDarkMode ? '#fff' : '#000';
+  const headerBg = isDarkMode ? '#111' : '#fff';
+
   return (
-    <div style={{ minHeight: '100vh', background: '#fefcf0', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: bgColor, display: 'flex', flexDirection: 'column', color: textColor }}>
       {/* Analysis Modal */}
       {gameState.status === 'ANALYSIS' && currentItem && userGuess && (
         <AnalysisModal
@@ -281,7 +293,7 @@ const App: React.FC = () => {
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header style={{
-        background: '#fff',
+        background: headerBg,
         padding: '12px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: '3px solid #000',
@@ -298,57 +310,87 @@ const App: React.FC = () => {
         {/* Stats */}
         <div style={{ display: 'flex', gap: 32, flex: 1, justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#000', lineHeight: 1 }}>{gameState.streak}</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: textColor, lineHeight: 1 }}>{gameState.streak}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
           </div>
         </div>
 
-        {/* Sound + Settings */}
+        {/* Sound + Theme */}
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          {/* Sound Toggle */}
           <button
             onClick={toggleSound}
             className="neo-border neo-shadow-sm neo-button"
             style={{
               width: 40, height: 40, borderRadius: '50%',
-              background: soundOn ? '#2DBD6E' : '#ccc',
+              background: soundOn ? '#2DBD6E' : '#E53E3E',
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff'
+              color: '#fff',
+              position: 'relative',
+              transition: 'background 0.3s'
             }}
           >
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
-            </svg>
+            {soundOn ? (
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13.5 4.06c0-1.336-1.616-2.256-2.73-1.72l-5.24 3.102A1 1 0 005 7.25M9 19l-4.773-2.834A1 1 0 003 15.25V8.75a1 1 0 011.227-.96l4.773 2.834M9 19v4m0-11.726v.005" strokeWidth="2" stroke="currentColor" fill="none" />
+              </svg>
+            ) : (
+              <div style={{ position: 'relative', width: 18, height: 18 }}>
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style={{ opacity: 0.3 }}>
+                  <path d="M13.5 4.06c0-1.336-1.616-2.256-2.73-1.72l-5.24 3.102A1 1 0 005 7.25M9 19l-4.773-2.834A1 1 0 003 15.25V8.75a1 1 0 011.227-.96l4.773 2.834M9 19v4m0-11.726v.005" />
+                </svg>
+                <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24" style={{ position: 'absolute', top: 0, left: 0 }}>
+                  <line x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              </div>
+            )}
           </button>
-          <div className="neo-border neo-shadow-sm" style={{
-            width: 40, height: 40, borderRadius: '50%',
-            background: '#F5C518',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #000' }} />
-          </div>
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="neo-border neo-shadow-sm neo-button"
+            style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: '#F5C518',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#000',
+              transition: 'background 0.3s'
+            }}
+          >
+            {isDarkMode ? (
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21.64 15.89c-.5-.11-1.033.122-1.141.66-.426 2.034-1.671 3.893-3.368 5.12-1.697 1.227-3.802 1.804-5.957 1.604-2.155-.2-4.149-1.17-5.541-2.562-1.392-1.392-2.362-3.386-2.562-5.541-.2-2.155.377-4.26 1.604-5.957 1.227-1.697 3.086-2.942 5.12-3.368.538-.108.77-.641.66-1.141-.11-.5-.641-.77-1.141-.66C5.275 3.71 3.12 5.075 1.71 7.078c-1.41 2.003-2.108 4.495-1.908 6.987.2 2.492.898 4.984 2.308 6.987 1.41 2.003 3.565 3.368 5.92 3.878 2.355.51 4.847.21 7.05-.9 2.203-1.11 4.008-2.975 5.118-5.178.11-.5-.122-1.033-.66-1.141z" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 18a6 6 0 100-12 6 6 0 000 12zM12 2v4m0 12v4M4.22 4.22l2.83 2.83m8.94 8.94l2.83 2.83M2 12h4m12 0h4M4.22 19.78l2.83-2.83m8.94-8.94l2.83-2.83" stroke="currentColor" strokeWidth="2" fill="none" />
+              </svg>
+            )}
+          </button>
         </div>
       </header>
 
-      {/* ── Round + Lives row ───────────────────────────────────────── */}
+      {/* ── Round + Lives row ─────────────────────────────────────────────────── */}
       <div style={{
         padding: '12px 16px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: headerBg,
+        borderBottom: isDarkMode ? '1px solid #333' : '1px solid #eee'
       }}>
         <div className="neo-border" style={{
-          background: '#000', color: '#fff',
+          background: isDarkMode ? '#333' : '#000', color: isDarkMode ? '#fff' : '#fff',
           fontWeight: 900, fontSize: 12, letterSpacing: 1.5,
           padding: '6px 14px', borderRadius: 4,
           textTransform: 'uppercase'
         }}>
           ROUND {currentIndex + 1}/{totalItems}
-        </div>
-
-        {/* Lives as dots */}
+          {/* Lives as dots */}
         <div style={{ display: 'flex', gap: 8 }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
@@ -356,15 +398,15 @@ const App: React.FC = () => {
               className="neo-border"
               style={{
                 width: 14, height: 14, borderRadius: '50%',
-                background: i < gameState.lives ? '#E53E3E' : '#ddd',
+                background: i < gameState.lives ? '#E53E3E' : isDarkMode ? '#444' : '#ddd',
                 transition: 'background 0.3s'
               }}
             />
           ))}
         </div>
-      </div>
+      </div>div>
 
-      {/* ── Card area ───────────────────────────────────────────────── */}
+      {/* ── Card area ─────────────────────────────────────────────────── */}
       <div style={{ flex: 1, padding: '0px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {currentItem ? (
           <GameCard
@@ -372,16 +414,15 @@ const App: React.FC = () => {
             onVote={handleVote}
             disabled={gameState.status === 'ANALYSIS'}
             difficulty={gameState.difficulty}
+            isDarkMode={isDarkMode}
           />
         ) : (
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#000' }}>LOADING...</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: textColor }}>LOADING...</div>
         )}
-      </div>
-
-      {/* ── Bottom Bar (Timer + Skip) ────────────────────────────────── */}
+      {/* ── Bottom Bar (Timer + Skip) ─────────────────────────────────────────────────── */}
       <div style={{
         padding: '16px',
-        background: '#fff',
+        background: headerBg,
         borderTop: '3px solid #000',
         display: 'flex',
         alignItems: 'center',
@@ -391,7 +432,7 @@ const App: React.FC = () => {
         <div className="neo-border" style={{
           flex: 1,
           height: 32,
-          background: '#fff',
+          background: cardBg,
           borderRadius: 16,
           overflow: 'hidden',
           position: 'relative'
@@ -405,7 +446,7 @@ const App: React.FC = () => {
           <div style={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 900, color: timerPercentage < 55 ? '#000' : '#fff',
+            fontSize: 13, fontWeight: 900, color: timerPercentage < 55 ? textColor : '#fff',
             letterSpacing: 0.5
           }}>
             <span style={{ marginRight: 4 }}>🕒</span> {timeLeft}s
@@ -419,8 +460,8 @@ const App: React.FC = () => {
           style={{
             padding: '0 20px',
             height: 40,
-            background: '#fff',
-            color: '#000',
+            background: cardBg,
+            color: textColor,
             fontWeight: 900,
             fontSize: 14,
             letterSpacing: 1,
@@ -433,8 +474,7 @@ const App: React.FC = () => {
         >
           <span style={{ fontSize: 16 }}>»</span> SKIP
         </button>
-      </div>
-    </div>
+      </div></div>
   );
 };
 

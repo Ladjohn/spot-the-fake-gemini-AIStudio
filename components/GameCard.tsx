@@ -7,6 +7,7 @@ interface GameCardProps {
   onVote: (type: 'REAL' | 'FAKE') => void;
   disabled: boolean;
   difficulty: 'Easy' | 'Medium' | 'Hard';
+  isDarkMode?: boolean;
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -23,7 +24,7 @@ const DIFFICULTY_COLORS: Record<string, { bg: string; text: string }> = {
   Hard:   { bg: '#fff', text: '#000' },
 };
 
-const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty }) => {
+const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty, isDarkMode = false }) => {
   const [imgSrc, setImgSrc] = useState(item?.imageUrl || '/placeholder.png');
   const [loaded, setLoaded] = useState(false);
   const [offsetX, setOffsetX] = useState(0);
@@ -81,6 +82,8 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
     : { bg: '#F5C518', text: '#000' };
   const diffStyle = DIFFICULTY_COLORS[difficulty] || DIFFICULTY_COLORS.Medium;
 
+  const cardBg = isDarkMode ? '#2a2a2a' : '#fff';
+
   return (
     <div
       className="select-none"
@@ -129,12 +132,12 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
 
         {/* Card */}
         <div className="neo-card" style={{
-          background: '#fff',
+          background: isDarkMode ? '#2a2a2a' : '#fff',
           borderRadius: 16,
           overflow: 'hidden',
         }}>
           {/* Image section */}
-          <div style={{ position: 'relative', height: 240, background: '#ddd', overflow: 'hidden', borderBottom: '3px solid #000' }}>
+          <div style={{ position: 'relative', height: 240, background: isDarkMode ? '#444' : '#ddd', overflow: 'hidden', borderBottom: '3px solid #000' }}>
             {!loaded && (
               <div style={{
                 position: 'absolute', inset: 0,
@@ -163,7 +166,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
             {/* Difficulty badge */}
             <div className="neo-border neo-shadow-sm" style={{
               position: 'absolute', top: 12, left: 12,
-              background: diffStyle.bg, color: diffStyle.text,
+              background: isDarkMode ? '#333' : diffStyle.bg, color: isDarkMode ? '#fff' : diffStyle.text,
               fontWeight: 800, fontSize: 11, letterSpacing: 1,
               padding: '4px 12px', borderRadius: 4,
               textTransform: 'uppercase'
@@ -184,41 +187,16 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
           </div>
 
           {/* Content section */}
-          <div style={{ padding: '20px 20px 24px' }}>
+          <div style={{ padding: '20px 20px 24px', background: cardBg }}>
             {/* Headline row */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
               <h2 style={{
                 flex: 1, margin: 0,
-                fontWeight: 900, fontSize: 22, lineHeight: 1.2, color: '#000',
+                fontWeight: 900, fontSize: 22, lineHeight: 1.2, color: isDarkMode ? '#fff' : '#000',
                 fontFamily: 'Space Grotesk, sans-serif'
               }}>
                 {item.headline || (item as any).title}
               </h2>
-
-              {/* Speaker button */}
-              <button
-                onClick={() => {
-                  if ('speechSynthesis' in window) {
-                    const u = new SpeechSynthesisUtterance(item.headline || (item as any).title);
-                    u.rate = 0.95;
-                    window.speechSynthesis.speak(u);
-                  }
-                }}
-                className="neo-border neo-shadow-sm neo-button"
-                style={{
-                  flexShrink: 0, width: 40, height: 40,
-                  borderRadius: '50%',
-                  background: '#fff', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#000'
-                }}
-                aria-label="Read headline aloud"
-              >
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                    d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H4v4h4l4 4V6z" />
-                </svg>
-              </button>
             </div>
 
             {/* Summary with blue left border */}
@@ -227,8 +205,8 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
                 borderLeft: '4px solid #3B7FF5',
                 paddingLeft: 16,
                 marginBottom: 24,
-                color: '#333',
-                fontSize: 15,
+                color: isDarkMode ? '#bbb' : '#333',
+                fontSize: 14,
                 lineHeight: 1.6,
                 fontWeight: 500
               }}>
@@ -249,7 +227,8 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
                   fontWeight: 900, fontSize: 18, letterSpacing: 1.5,
                   borderRadius: 12,
                   cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.7 : 1
+                  opacity: disabled ? 0.7 : 1,
+                  transition: 'all 0.2s'
                 }}
               >
                 FAKE!
@@ -266,7 +245,8 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty 
                   fontWeight: 900, fontSize: 18, letterSpacing: 1.5,
                   borderRadius: 12,
                   cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.7 : 1
+                  opacity: disabled ? 0.7 : 1,
+                  transition: 'all 0.2s'
                 }}
               >
                 REAL!

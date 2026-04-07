@@ -15,16 +15,19 @@ async function askLLM(payload: any) {
   return res.json();
 }
 
-// 🔥 INSTANT IMAGE (NO API, NO DELAY)
+// 🔥 ENHANCED IMAGE GENERATION with better keywords
 function fetchImage(query: string): string {
-  const keyword = query
-    .split(" ")
-    .slice(0, 3)
-    .join("-")
-    .replace(/[^\w-]/gi, "")
-    .toLowerCase();
+  // Extract key terms from the headline for better image search
+  const keywords = query
+    .toLowerCase()
+    .split(/[\s,\.!?]+/)
+    .filter(word => word.length > 3 && !['that', 'this', 'have', 'with', 'from', 'been', 'were', 'what', 'when', 'where', 'which', 'find', 'found', 'shows', 'show'].includes(word))
+    .slice(0, 4)
+    .join("-");
 
-  return `https://picsum.photos/seed/${keyword}/600/400`;
+  const seed = keywords || query.split(" ").slice(0, 2).join("-").replace(/[^\w-]/gi, "").toLowerCase();
+  
+  return `https://picsum.photos/seed/${seed}/600/400`;
 }
 
 // 🔥 PARSER
@@ -51,13 +54,13 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
       messages: [
         {
           role: "system",
-          content: "Return ONLY JSON array. No explanation."
+          content: "Return ONLY JSON array. No explanation. Include headline, type (REAL or FAKE), and a brief explanation for each."
         },
         {
           role: "user",
-          content: `Generate ${count} viral news items in JSON:
+          content: `Generate ${count} viral news items in JSON format with headline, type, and explanation:
 [
- { "headline": "...", "type": "REAL" or "FAKE" }
+ { "headline": "...", "type": "REAL" or "FAKE", "explanation": "brief fact or reason why this is real or fake" }
 ]`
         }
       ]
@@ -72,13 +75,17 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
     // 🔥 create items instantly (no async delay)
     const formatted: NewsItem[] = parsed.map((item: any, i: number) => {
       const headline = item.headline || "No headline";
+      const explanation = item.explanation || "This is a viral news story.";
 
       return {
         id: `${Date.now()}-${i}`,
         title: headline,
         headline,
         type: item.type === "FAKE" ? "FAKE" : "REAL",
-        imageUrl: fetchImage(headline) // ⚡ instant
+        imageUrl: fetchImage(headline), // ⚡ instant with better keywords
+        summary: explanation,
+        explanation: explanation,
+        category: 'Science' as any
       };
     });
 
@@ -96,7 +103,10 @@ export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
         title: "Octopus has 3 hearts",
         headline: "Octopus has 3 hearts",
         type: "REAL",
-        imageUrl: fetchImage("octopus ocean")
+        imageUrl: fetchImage("octopus ocean"),
+        summary: "Octopuses really do have three hearts — two pump blood to the gills and one pumps it to the body.",
+        explanation: "Octopuses have a complex circulatory system with three hearts that allow them to survive in deep ocean environments.",
+        category: 'Science' as any
       }
     ];
   }

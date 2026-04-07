@@ -59,6 +59,7 @@ const AnalysisModal: React.FC<Props> = ({
 
   const correct = userGuess === item.type;
   const truthText = item.summary || item.explanation || v.reasoning || "No additional information available.";
+  const additionalFact = item.explanation || "Learn more about this topic by researching credible sources.";
 
   return (
     <div style={{
@@ -98,7 +99,7 @@ const AnalysisModal: React.FC<Props> = ({
             border: '2px solid #111',
             borderRadius: 12,
             padding: '16px',
-            marginBottom: 24,
+            marginBottom: 20,
             background: '#fafafa'
           }}>
             <div style={{
@@ -130,6 +131,43 @@ const AnalysisModal: React.FC<Props> = ({
             </p>
           </div>
 
+          {/* LEARN MORE Box */}
+          <div style={{
+            border: '2px solid #ddd',
+            borderRadius: 12,
+            padding: '16px',
+            marginBottom: 24,
+            background: '#f9f9f9'
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              marginBottom: 10
+            }}>
+              {/* Lightbulb icon */}
+              <div style={{
+                width: 24, height: 24,
+                background: '#F5C518', borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#000', fontWeight: 900, fontSize: 14,
+                flexShrink: 0
+              }}>
+                💡
+              </div>
+              <h3 style={{
+                fontSize: 11, fontWeight: 800, color: '#F5C518',
+                margin: 0, letterSpacing: 1.2, textTransform: 'uppercase'
+              }}>
+                DID YOU KNOW?
+              </h3>
+            </div>
+            <p style={{
+              fontSize: 13, fontWeight: 500, color: '#555',
+              margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordWrap: 'break-word'
+            }}>
+              {additionalFact}
+            </p>
+          </div>
+
           {/* Loading indicator placeholder */}
           <div style={{
             textAlign: 'center', fontSize: 11, fontWeight: 600,
@@ -155,11 +193,12 @@ const AnalysisModal: React.FC<Props> = ({
               fontWeight: 900,
               fontSize: 16,
               letterSpacing: 1.5,
-              border: 'none',
+              border: '3px solid #000',
               borderRadius: 12,
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              textTransform: 'uppercase'
+              textTransform: 'uppercase',
+              boxShadow: '4px 4px 0px 0px #000'
             }}
             onMouseDown={e => {
               e.currentTarget.style.transform = 'scale(0.96)';
@@ -167,14 +206,14 @@ const AnalysisModal: React.FC<Props> = ({
             }}
             onMouseUp={e => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+              e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
             }}
             onMouseLeave={e => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+              e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+              e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
             }}
           >
             NEXT ROUND →
