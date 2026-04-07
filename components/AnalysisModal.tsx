@@ -16,7 +16,6 @@ const AnalysisModal: React.FC<Props> = ({
   verification,
   onNext,
 }) => {
-  // Default verification object
   let v: VerificationResult = {
     authenticityScore: 50,
     verdict: "UNCERTAIN",
@@ -26,7 +25,6 @@ const AnalysisModal: React.FC<Props> = ({
     visualArtifacts: [],
   };
 
-  // Try to normalize whatever was passed in (string / object)
   try {
     if (typeof verification === "string") {
       const maybe = JSON.parse(verification);
@@ -52,9 +50,8 @@ const AnalysisModal: React.FC<Props> = ({
     console.warn("Error parsing verification:", e, verification);
   }
 
-  // Normalize & clamp score to 0..100
   let score = Math.round(Number(v.authenticityScore) || 0);
-  if (score <= 1) score = Math.round(score * 100); // convert 0..1 -> 0..100
+  if (score <= 1) score = Math.round(score * 100);
   score = Math.max(0, Math.min(100, score));
 
   const correct = userGuess === item.type;
@@ -62,161 +59,262 @@ const AnalysisModal: React.FC<Props> = ({
   const additionalFact = item.explanation || "Learn more about this topic by researching credible sources.";
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 50, padding: '20px'
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: 20, width: '100%', maxWidth: 420,
-        overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-      }}>
-        {/* Result Banner - Green for correct, Red for wrong */}
-        <div style={{
-          background: correct ? '#2DBD6E' : '#E53E3E',
-          padding: '28px 24px',
-          textAlign: 'center',
-          transition: 'background 0.3s ease'
-        }}>
-          <h1 style={{
-            fontSize: 36, fontWeight: 900, color: '#fff',
-            margin: 0, letterSpacing: 1.2, fontStyle: 'italic'
-          }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.72)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          background: "#fffdf7",
+          width: "100%",
+          maxWidth: 440,
+          overflow: "hidden",
+          border: "4px solid #000",
+          boxShadow: "12px 12px 0 #000",
+        }}
+      >
+        <div
+          style={{
+            background: correct ? "#2DBD6E" : "#FF5E5B",
+            padding: "24px",
+            textAlign: "center",
+            transition: "background 0.3s ease",
+            borderBottom: "4px solid #000",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 16,
+              background: "#000",
+              color: "#fff",
+              padding: "6px 10px",
+              fontSize: 10,
+              fontWeight: 900,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+            }}
+          >
+            Verdict
+          </div>
+          <h1
+            style={{
+              fontSize: 40,
+              fontWeight: 900,
+              color: "#fff",
+              margin: "18px 0 0",
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              fontFamily: "'Arial Black', 'Space Grotesk', sans-serif",
+            }}
+          >
             {correct ? "NAILED IT!" : "NOPE!"}
           </h1>
-          <p style={{
-            fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)',
-            margin: '8px 0 0', letterSpacing: 0.5
-          }}>
-            You: <b>{userGuess}</b> &nbsp; vs &nbsp; Truth: <b>{item.type}</b>
+          <p
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              color: "rgba(255,255,255,0.95)",
+              margin: "8px 0 0",
+              letterSpacing: 0.8,
+              textTransform: "uppercase",
+            }}
+          >
+            You: <b>{userGuess}</b>  vs  Truth: <b>{item.type}</b>
           </p>
         </div>
 
-        {/* Content Section */}
-        <div style={{ padding: '28px 24px' }}>
-          {/* THE TRUTH Box */}
-          <div style={{
-            border: '2px solid #111',
-            borderRadius: 12,
-            padding: '16px',
-            marginBottom: 20,
-            background: '#fafafa'
-          }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              marginBottom: 10
-            }}>
-              {/* Blue icon */}
-              <div style={{
-                width: 24, height: 24,
-                background: '#3B7FF5', borderRadius: 6,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontWeight: 900, fontSize: 14,
-                flexShrink: 0
-              }}>
-                ⓘ
+        <div style={{ padding: "24px" }}>
+          <div
+            style={{
+              border: "3px solid #111",
+              padding: "16px",
+              marginBottom: 20,
+              background: "#F7D748",
+              boxShadow: "6px 6px 0 #000",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  background: "#3B7FF5",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  fontWeight: 900,
+                  fontSize: 14,
+                  flexShrink: 0,
+                }}
+              >
+                i
               </div>
-              <h3 style={{
-                fontSize: 11, fontWeight: 800, color: '#3B7FF5',
-                margin: 0, letterSpacing: 1.2, textTransform: 'uppercase'
-              }}>
-                THE TRUTH
+              <h3
+                style={{
+                  fontSize: 12,
+                  fontWeight: 900,
+                  color: "#000",
+                  margin: 0,
+                  letterSpacing: 1.3,
+                  textTransform: "uppercase",
+                }}
+              >
+                The Truth
               </h3>
             </div>
-            <p style={{
-              fontSize: 14, fontWeight: 500, color: '#333',
-              margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordWrap: 'break-word'
-            }}>
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#111",
+                margin: 0,
+                lineHeight: 1.6,
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
+            >
               {truthText}
             </p>
           </div>
 
-          {/* LEARN MORE Box */}
-          <div style={{
-            border: '2px solid #ddd',
-            borderRadius: 12,
-            padding: '16px',
-            marginBottom: 24,
-            background: '#f9f9f9'
-          }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              marginBottom: 10
-            }}>
-              {/* Lightbulb icon */}
-              <div style={{
-                width: 24, height: 24,
-                background: '#F5C518', borderRadius: 6,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#000', fontWeight: 900, fontSize: 14,
-                flexShrink: 0
-              }}>
-                💡
+          <div
+            style={{
+              border: "3px solid #000",
+              padding: "16px",
+              marginBottom: 20,
+              background: "#00E0B8",
+              boxShadow: "6px 6px 0 #000",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  background: "#000",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  fontWeight: 900,
+                  fontSize: 14,
+                  flexShrink: 0,
+                }}
+              >
+                +
               </div>
-              <h3 style={{
-                fontSize: 11, fontWeight: 800, color: '#F5C518',
-                margin: 0, letterSpacing: 1.2, textTransform: 'uppercase'
-              }}>
-                DID YOU KNOW?
+              <h3
+                style={{
+                  fontSize: 12,
+                  fontWeight: 900,
+                  color: "#000",
+                  margin: 0,
+                  letterSpacing: 1.3,
+                  textTransform: "uppercase",
+                }}
+              >
+                Did You Know?
               </h3>
             </div>
-            <p style={{
-              fontSize: 13, fontWeight: 500, color: '#555',
-              margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordWrap: 'break-word'
-            }}>
+            <p
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#111",
+                margin: 0,
+                lineHeight: 1.6,
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
+            >
               {additionalFact}
             </p>
           </div>
 
-          {/* Loading indicator placeholder */}
-          <div style={{
-            textAlign: 'center', fontSize: 11, fontWeight: 600,
-            color: '#aaa', letterSpacing: 1, marginBottom: 20,
-            textTransform: 'uppercase'
-          }}>
-            SCANNING VIRAL DATABASE...
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+              marginBottom: 20,
+            }}
+          >
+            <div
+              style={{
+                border: "3px solid #000",
+                background: "#fff",
+                padding: "12px 10px",
+                boxShadow: "4px 4px 0 #000",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: "uppercase" }}>Confidence</div>
+              <div style={{ fontSize: 24, fontWeight: 900, marginTop: 4 }}>{score}%</div>
+            </div>
+            <div
+              style={{
+                border: "3px solid #000",
+                background: "#FF7A00",
+                padding: "12px 10px",
+                boxShadow: "4px 4px 0 #000",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: "uppercase" }}>Scanner</div>
+              <div style={{ fontSize: 24, fontWeight: 900, marginTop: 4 }}>ON</div>
+            </div>
           </div>
         </div>
 
-        {/* NEXT ROUND Button */}
-        <div style={{ padding: '0 24px 24px' }}>
+        <div style={{ padding: "0 24px 24px" }}>
           <button
             onClick={() => {
               playSound("CLICK");
               onNext();
             }}
+            className="neo-analysis-button"
             style={{
-              width: '100%',
-              padding: '16px 0',
-              background: '#111',
-              color: '#fff',
+              width: "100%",
+              padding: "16px 0",
+              background: "#000",
+              color: "#fff",
               fontWeight: 900,
               fontSize: 16,
               letterSpacing: 1.5,
-              border: '3px solid #000',
-              borderRadius: 12,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              textTransform: 'uppercase',
-              boxShadow: '4px 4px 0px 0px #000'
-            }}
-            onMouseDown={e => {
-              e.currentTarget.style.transform = 'scale(0.96)';
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-            }}
-            onMouseUp={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
+              border: "3px solid #000",
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+              textTransform: "uppercase",
+              boxShadow: "4px 4px 0 #000",
             }}
           >
-            NEXT ROUND →
+            Next Round -&gt;
           </button>
         </div>
       </div>
