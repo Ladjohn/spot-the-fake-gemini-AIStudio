@@ -170,7 +170,7 @@ const App: React.FC = () => {
     setTimeout(() => setLoading(false), 300);
   };
 
-  // ── Vote
+  // ── Vote — just updates score/lives/status, no nextQuestion call here
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
     if (gameState.status !== 'PLAYING') return;
     navigator.vibrate?.(15);
@@ -191,13 +191,6 @@ const App: React.FC = () => {
         status: willGameOver ? 'GAME_OVER' : 'ANALYSIS'
       };
     });
-
-    // Auto-advance only if not game over
-    if (!willGameOver) {
-      setTimeout(() => {
-        nextQuestion();
-      }, 800);
-    }
   }, [quizItems, currentIndex, gameState.status, gameState.lives]);
 
   // ── Next question
@@ -219,6 +212,13 @@ const App: React.FC = () => {
     setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     setLoading(false);
   }, [currentIndex, quizItems.length]);
+
+  // ── Auto-advance when ANALYSIS — always uses fresh nextQuestion via effect
+  useEffect(() => {
+    if (gameState.status !== 'ANALYSIS') return;
+    const t = setTimeout(() => { nextQuestion(); }, 700);
+    return () => clearTimeout(t);
+  }, [gameState.status, nextQuestion]);
 
   if (loading) return <LoadingScreen />;
   if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
