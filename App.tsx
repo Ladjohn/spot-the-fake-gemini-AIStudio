@@ -7,16 +7,118 @@ import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
 import Timer from './components/Timer';
 import SkipButton from './components/SkipButton';
+import { getHighScore, setHighScore } from './utils/storage';
 
 const LoadingScreen = () => (
-  <div className="min-h-screen flex items-center justify-center text-2xl font-black animate-pulse">
+  <div className="min-h-screen flex items-center justify-center text-2xl font-black animate-pulse" style={{ background: '#F5C518' }}>
     🔍 Loading viral news...
   </div>
 );
 
+const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }> = ({ onStart }) => {
+  const best = getHighScore();
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: '#F5C518' }}
+    >
+      <div
+        className="bg-white rounded-3xl flex flex-col items-center"
+        style={{
+          width: 320,
+          padding: '36px 28px 40px',
+          boxShadow: '0 6px 32px rgba(0,0,0,0.13)'
+        }}
+      >
+        {/* SF Logo */}
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            background: '#3B7FF5',
+            borderRadius: 12,
+            transform: 'rotate(-6deg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 20,
+            boxShadow: '0 4px 12px rgba(59,127,245,0.35)'
+          }}
+        >
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 22, letterSpacing: 1 }}>SF</span>
+        </div>
+
+        {/* Title */}
+        <div style={{ textAlign: 'center', marginBottom: 6 }}>
+          <div style={{ fontWeight: 900, fontSize: 40, lineHeight: 1.05, letterSpacing: -1, color: '#111' }}>
+            SPOT<br />THE<br />FAKE
+          </div>
+        </div>
+
+        {/* Subtitle */}
+        <div style={{ fontWeight: 600, fontSize: 14, color: '#555', marginBottom: 24, letterSpacing: 0.5 }}>
+          Viral News Edition
+        </div>
+
+        {/* Your Best */}
+        <div
+          style={{
+            width: '100%',
+            border: '1.5px solid #e0e0e0',
+            borderRadius: 10,
+            padding: '10px 0',
+            textAlign: 'center',
+            marginBottom: 22
+          }}
+        >
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#888', letterSpacing: 1.5, marginBottom: 2 }}>
+            YOUR BEST
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>
+            {best}
+          </div>
+        </div>
+
+        {/* Difficulty label */}
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 2, marginBottom: 12 }}>
+          SELECT DIFFICULTY
+        </div>
+
+        {/* Difficulty buttons */}
+        {(['Easy', 'Medium', 'Hard'] as const).map((d) => (
+          <button
+            key={d}
+            onClick={() => onStart(d)}
+            style={{
+              width: '100%',
+              padding: '14px 0',
+              marginBottom: 10,
+              border: '1.5px solid #ddd',
+              borderRadius: 10,
+              background: '#fff',
+              fontWeight: 800,
+              fontSize: 15,
+              letterSpacing: 1.5,
+              color: '#222',
+              cursor: 'pointer',
+              transition: 'background 0.12s, transform 0.1s'
+            }}
+            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
+            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            {d.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const fallbackItems: NewsItem[] = [
-  { id: "1", headline: "Octopus has 3 hearts", title: "Octopus has 3 hearts", type: "REAL" },
-  { id: "2", headline: "Cats can fly naturally", title: "Cats can fly naturally", type: "FAKE" }
+  { id: "1", headline: "Octopus has 3 hearts", title: "Octopus has 3 hearts", type: "REAL" } as any,
+  { id: "2", headline: "Cats can fly naturally", title: "Cats can fly naturally", type: "FAKE" } as any
 ];
 
 const App: React.FC = () => {
@@ -33,7 +135,7 @@ const App: React.FC = () => {
     history: [],
     status: 'IDLE',
     difficulty: 'Medium',
-    highScore: 0
+    highScore: getHighScore()
   });
 
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -43,6 +145,17 @@ const App: React.FC = () => {
   useEffect(() => {
     preloadRound();
   }, []);
+
+  // Save high score when game ends
+  useEffect(() => {
+    if (gameState.status === 'GAME_OVER') {
+      const saved = getHighScore();
+      if (gameState.score > saved) {
+        setHighScore(gameState.score);
+        setGameState(prev => ({ ...prev, highScore: gameState.score }));
+      }
+    }
+  }, [gameState.status]);
 
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
     playSound('CLICK');
@@ -74,7 +187,7 @@ const App: React.FC = () => {
   };
 
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
-    if (gameState.status !== 'PLAYING') return; // 🛡️ prevent spam
+    if (gameState.status !== 'PLAYING') return;
 
     navigator.vibrate?.(15);
 
@@ -129,6 +242,11 @@ const App: React.FC = () => {
 
   if (loading) return <LoadingScreen />;
 
+  // Show start screen when idle or game over
+  if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
+    return <StartScreen onStart={startGame} />;
+  }
+
   const currentItem = quizItems[currentIndex];
 
   return (
@@ -176,7 +294,7 @@ const App: React.FC = () => {
       ) : (
         <button
           onClick={() => startGame('Medium')}
-          className="px-6 py-3 bg-g-blue text-white font-black rounded active:scale-95 transition"
+          className="px-6 py-3 bg-blue-500 text-white font-black rounded active:scale-95 transition"
         >
           Start Game
         </button>
