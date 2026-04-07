@@ -24,8 +24,48 @@ const LoadingScreen = () => (
   </div>
 );
 
-const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }> = ({ onStart }) => {
+const SpeakerIcon: React.FC<{ muted?: boolean }> = ({ muted = false }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M11 5L6 9H3v6h3l5 4V5z" />
+    {!muted ? (
+      <>
+        <path d="M15.5 8.5a5 5 0 010 7" />
+        <path d="M18.5 6a9 9 0 010 12" />
+      </>
+    ) : (
+      <line x1="4" y1="4" x2="20" y2="20" />
+    )}
+  </svg>
+);
+
+const ThemeIcon: React.FC<{ dark?: boolean }> = ({ dark = false }) => (
+  dark ? (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" />
+    </svg>
+  ) : (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="M4.93 4.93l1.41 1.41" />
+      <path d="M17.66 17.66l1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="M6.34 17.66l-1.41 1.41" />
+      <path d="M19.07 4.93l-1.41 1.41" />
+    </svg>
+  )
+);
+
+const StartScreen: React.FC<{
+  onStart: (d: 'Easy' | 'Medium' | 'Hard') => void;
+  currentScore?: number;
+  highScore?: number;
+  isGameOver?: boolean;
+}> = ({ onStart, currentScore = 0, highScore = 0, isGameOver = false }) => {
   const best = getHighScore();
+  const shownHighScore = Math.max(best, highScore);
 
   return (
     <div
@@ -38,81 +78,133 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
         padding: '20px',
       }}
     >
-      <div style={{ background: '#F5C518', borderRadius: 32, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
-        <div style={{ background: '#fff', borderRadius: 24, width: 340, padding: '48px 32px 44px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-            <div
-              style={{
-                width: 72,
-                height: 72,
-                background: '#3B7FF5',
-                borderRadius: 14,
-                transform: 'rotate(-8deg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 6px 16px rgba(59,127,245,0.4)',
-                border: '3px solid #1e5cc8',
-              }}
-            >
-              <span style={{ color: '#fff', fontWeight: 900, fontSize: 24, letterSpacing: 1 }}>F.O.R</span>
-            </div>
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 380,
+          background: '#fff',
+          border: '4px solid #000',
+          boxShadow: '10px 10px 0 #000',
+          padding: '28px 24px 22px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              background: '#3B7FF5',
+              transform: 'rotate(-8deg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '6px 6px 0 #000',
+              border: '3px solid #000',
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: 24, letterSpacing: 1 }}>F.O.R</span>
           </div>
 
           <div
             style={{
+              minWidth: 110,
+              background: '#fff',
+              border: '3px solid #000',
+              boxShadow: '6px 6px 0 #000',
+              padding: '10px 12px',
               textAlign: 'center',
-              fontWeight: 900,
-              fontSize: 42,
-              lineHeight: 1.05,
-              letterSpacing: -1.2,
-              color: '#000',
-              marginBottom: 10,
-              fontFamily: 'Space Grotesk, sans-serif',
             }}
           >
-            FAKE
-            <br />
-            OR REAL
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Best Score</div>
+            <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1, color: '#2DBD6E' }}>{shownHighScore}</div>
           </div>
-
-          <div style={{ textAlign: 'center', fontSize: 15, color: '#444', marginBottom: 26, lineHeight: 1.4 }}>
-            Pick the right answer and learn the truth behind the headline.
-          </div>
-
-          <div style={{ border: '2px solid #222', borderRadius: 12, padding: '14px 0', textAlign: 'center', marginBottom: 28, background: '#fafafa' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#666', letterSpacing: 1.8, marginBottom: 4, textTransform: 'uppercase' }}>BEST SCORE</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
-          </div>
-
-          <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
-            SELECT DIFFICULTY
-          </div>
-
-          {(['Easy', 'Medium', 'Hard'] as const).map(d => (
-            <button
-              key={d}
-              onClick={() => onStart(d)}
-              style={{
-                width: '100%',
-                padding: '16px 0',
-                marginBottom: 12,
-                border: '2px solid #222',
-                borderRadius: 12,
-                background: d === 'Easy' ? '#fff7cc' : d === 'Medium' ? '#eef4ff' : '#ffe7e7',
-                fontWeight: 800,
-                fontSize: 16,
-                letterSpacing: 1.2,
-                color: '#000',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                fontFamily: 'Inter, sans-serif',
-              }}
-            >
-              {d.toUpperCase()}
-            </button>
-          ))}
         </div>
+
+        <div
+          style={{
+            textAlign: 'left',
+            fontWeight: 900,
+            fontSize: 46,
+            lineHeight: 0.95,
+            letterSpacing: -1.5,
+            color: '#000',
+            marginBottom: 12,
+            fontFamily: 'Space Grotesk, sans-serif',
+            textTransform: 'uppercase',
+          }}
+        >
+          Fake
+          <br />
+          Or Real
+        </div>
+
+        <div
+          style={{
+            border: '3px solid #000',
+            boxShadow: '5px 5px 0 #000',
+            background: '#fff',
+            padding: '12px 14px',
+            marginBottom: 22,
+            fontSize: 16,
+            fontWeight: 700,
+            lineHeight: 1.35,
+          }}
+        >
+          Can you spot fact from fiction?
+        </div>
+
+        {isGameOver && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 12,
+              marginBottom: 22,
+            }}
+          >
+            <div style={{ border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#FF7A00', padding: '12px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Your Score</div>
+              <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{currentScore}</div>
+            </div>
+            <div style={{ border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#00D1B2', padding: '12px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Top Score</div>
+              <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{shownHighScore}</div>
+            </div>
+            <div style={{ gridColumn: '1 / -1', border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#111', color: '#fff', padding: '12px 14px', fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>
+              {currentScore >= shownHighScore ? 'New high score. Absolute menace.' : 'Round over. Hit play and beat it.'}
+            </div>
+          </div>
+        )}
+
+        <div style={{ textAlign: 'left', fontSize: 11, fontWeight: 900, color: '#111', letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
+          {isGameOver ? 'Play Again' : 'Select Difficulty'}
+        </div>
+
+        {(['Easy', 'Medium', 'Hard'] as const).map(d => (
+          <button
+            key={d}
+            onClick={() => onStart(d)}
+            style={{
+              width: '100%',
+              padding: '18px 16px',
+              marginBottom: 14,
+              border: '3px solid #000',
+              background: d === 'Easy' ? '#F7D548' : d === 'Medium' ? '#3B7FF5' : '#FF5A5F',
+              color: d === 'Medium' ? '#fff' : '#000',
+              fontWeight: 900,
+              fontSize: 20,
+              letterSpacing: 1.2,
+              cursor: 'pointer',
+              textAlign: 'left',
+              boxShadow: '6px 6px 0 #000',
+              fontFamily: 'Space Grotesk, sans-serif',
+              textTransform: 'uppercase',
+            }}
+          >
+            {d}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -307,7 +399,14 @@ const App: React.FC = () => {
 
   if (loading) return <LoadingScreen />;
   if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
-    return <StartScreen onStart={startGame} />;
+    return (
+      <StartScreen
+        onStart={startGame}
+        currentScore={gameState.score}
+        highScore={Math.max(gameState.highScore, getHighScore())}
+        isGameOver={gameState.status === 'GAME_OVER'}
+      />
+    );
   }
 
   const currentItem = quizItems[currentIndex];
@@ -380,7 +479,7 @@ const App: React.FC = () => {
               color: '#fff',
             }}
           >
-            {soundOn ? '?' : '×'}
+            <SpeakerIcon muted={!soundOn} />
           </button>
           <button
             onClick={toggleTheme}
@@ -397,7 +496,7 @@ const App: React.FC = () => {
               color: '#000',
             }}
           >
-            {isDarkMode ? '?' : '?'}
+            <ThemeIcon dark={isDarkMode} />
           </button>
         </div>
       </header>
