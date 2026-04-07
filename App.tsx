@@ -64,8 +64,7 @@ const StartScreen: React.FC<{
   highScore?: number;
   isGameOver?: boolean;
 }> = ({ onStart, currentScore = 0, highScore = 0, isGameOver = false }) => {
-  const best = getHighScore();
-  const shownHighScore = Math.max(best, highScore);
+  const shownHighScore = Math.max(getHighScore(), highScore);
 
   return (
     <div
@@ -88,7 +87,7 @@ const StartScreen: React.FC<{
           padding: '28px 24px 22px',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
           <div
             style={{
               width: 72,
@@ -104,20 +103,6 @@ const StartScreen: React.FC<{
             }}
           >
             <span style={{ color: '#fff', fontWeight: 900, fontSize: 24, letterSpacing: 1 }}>F.O.R</span>
-          </div>
-
-          <div
-            style={{
-              minWidth: 110,
-              background: '#fff',
-              border: '3px solid #000',
-              boxShadow: '6px 6px 0 #000',
-              padding: '10px 12px',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Best Score</div>
-            <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1, color: '#2DBD6E' }}>{shownHighScore}</div>
           </div>
         </div>
 
@@ -168,7 +153,7 @@ const StartScreen: React.FC<{
               <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{currentScore}</div>
             </div>
             <div style={{ border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#00D1B2', padding: '12px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Top Score</div>
+              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>High Score</div>
               <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{shownHighScore}</div>
             </div>
             <div style={{ gridColumn: '1 / -1', border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#111', color: '#fff', padding: '12px 14px', fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>
