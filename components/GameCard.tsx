@@ -19,9 +19,9 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 const DIFFICULTY_COLORS: Record<string, { bg: string; text: string }> = {
-  Easy:   { bg: '#fff', text: '#000' },
-  Medium: { bg: '#fff', text: '#000' },
-  Hard:   { bg: '#fff', text: '#000' },
+  Easy:   { bg: '#F7D748', text: '#000' },
+  Medium: { bg: '#3B7FF5', text: '#fff' },
+  Hard:   { bg: '#FF5E5B', text: '#000' },
 };
 
 const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty, isDarkMode = false }) => {
@@ -87,7 +87,7 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
   return (
     <div
       className="select-none"
-      style={{ width: '100%', maxWidth: 380, margin: '0 auto' }}
+      style={{ width: '100%', maxWidth: 400, margin: '0 auto' }}
     >
       <div
         style={{
@@ -108,36 +108,37 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
         <div
           style={{
             position: 'absolute', inset: 0, zIndex: 20,
-            background: 'rgba(45,189,110,0.85)',
+            background: 'rgba(45,189,110,0.92)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: 16, opacity: opacityReal, pointerEvents: 'none',
-            border: '3px solid #000'
+            opacity: opacityReal, pointerEvents: 'none',
+            border: '4px solid #000',
+            boxShadow: '8px 8px 0 #000'
           }}
         >
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 48 }}>REAL</span>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 52, letterSpacing: 2 }}>REAL</span>
         </div>
 
         {/* FAKE swipe overlay */}
         <div
           style={{
             position: 'absolute', inset: 0, zIndex: 20,
-            background: 'rgba(229,62,62,0.85)',
+            background: 'rgba(229,62,62,0.92)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: 16, opacity: opacityFake, pointerEvents: 'none',
-            border: '3px solid #000'
+            opacity: opacityFake, pointerEvents: 'none',
+            border: '4px solid #000',
+            boxShadow: '8px 8px 0 #000'
           }}
         >
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 48 }}>FAKE</span>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 52, letterSpacing: 2 }}>FAKE</span>
         </div>
 
         {/* Card */}
         <div className="neo-card" style={{
-          background: isDarkMode ? '#2a2a2a' : '#fff',
-          borderRadius: 16,
+          background: isDarkMode ? '#1f1f1f' : '#fffdf7',
           overflow: 'hidden',
         }}>
           {/* Image section */}
-          <div style={{ position: 'relative', height: 240, background: isDarkMode ? '#444' : '#ddd', overflow: 'hidden', borderBottom: '3px solid #000' }}>
+          <div style={{ position: 'relative', height: 250, background: isDarkMode ? '#444' : '#ddd', overflow: 'hidden', borderBottom: '4px solid #000' }}>
             {!loaded && (
               <div style={{
                 position: 'absolute', inset: 0,
@@ -165,10 +166,10 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
 
             {/* Difficulty badge */}
             <div className="neo-border neo-shadow-sm" style={{
-              position: 'absolute', top: 12, left: 12,
+              position: 'absolute', top: 14, left: 14,
               background: isDarkMode ? '#333' : diffStyle.bg, color: isDarkMode ? '#fff' : diffStyle.text,
-              fontWeight: 800, fontSize: 11, letterSpacing: 1,
-              padding: '4px 12px', borderRadius: 4,
+              fontWeight: 900, fontSize: 11, letterSpacing: 1.5,
+              padding: '6px 12px',
               textTransform: 'uppercase'
             }}>
               {difficulty}
@@ -176,56 +177,92 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
 
             {/* Category badge */}
             <div className="neo-border neo-shadow-sm" style={{
-              position: 'absolute', top: 12, right: 12,
+              position: 'absolute', top: 14, right: 14,
               background: catStyle.bg, color: catStyle.text,
-              fontWeight: 800, fontSize: 11, letterSpacing: 1,
-              padding: '4px 12px', borderRadius: 4,
+              fontWeight: 900, fontSize: 11, letterSpacing: 1.5,
+              padding: '6px 12px',
               textTransform: 'uppercase'
             }}>
               {category || 'SCIENCE'}
             </div>
+
+            <div
+              style={{
+                position: 'absolute',
+                left: 14,
+                bottom: 14,
+                background: '#000',
+                color: '#fff',
+                padding: '8px 10px',
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+              }}
+            >
+              Swipe left for fake / right for real
+            </div>
           </div>
 
           {/* Content section */}
-          <div style={{ padding: '20px 20px 24px', background: cardBg }}>
-            {/* Headline row */}
+          <div style={{ padding: '22px 22px 24px', background: cardBg }}>
+            <div
+              style={{
+                display: 'inline-block',
+                marginBottom: 14,
+                background: '#FF7A00',
+                color: '#000',
+                border: '3px solid #000',
+                boxShadow: '4px 4px 0 #000',
+                padding: '6px 10px',
+                transform: 'rotate(-2deg)',
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: 1.4,
+                textTransform: 'uppercase',
+              }}
+            >
+              Breaking feed
+            </div>
+
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
               <h2 style={{
                 flex: 1, margin: 0,
-                fontWeight: 900, fontSize: 22, lineHeight: 1.2, color: isDarkMode ? '#fff' : '#000',
-                fontFamily: 'Space Grotesk, sans-serif'
+                fontWeight: 900, fontSize: 26, lineHeight: 1.05, color: isDarkMode ? '#fff' : '#000',
+                fontFamily: "'Arial Black', 'Space Grotesk', sans-serif",
+                textTransform: 'uppercase',
+                letterSpacing: -0.8,
               }}>
                 {item.headline || (item as any).title}
               </h2>
             </div>
 
-            {/* Summary with blue left border */}
             {(item.summary || (item as any).description) && (
               <div style={{
-                borderLeft: '4px solid #3B7FF5',
-                paddingLeft: 16,
+                border: '3px solid #000',
+                background: isDarkMode ? '#2b2b2b' : '#f3efe2',
+                boxShadow: '5px 5px 0 #000',
+                padding: '14px 16px',
                 marginBottom: 24,
                 color: isDarkMode ? '#bbb' : '#333',
                 fontSize: 14,
                 lineHeight: 1.6,
-                fontWeight: 500
+                fontWeight: 700
               }}>
                 {item.summary || (item as any).description}
               </div>
             )}
 
-            {/* Vote buttons */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 8 }}>
               <button
                 onClick={() => handleInteraction('FAKE')}
                 disabled={disabled}
-                className="neo-border neo-shadow neo-button"
+                className="neo-border neo-shadow neo-button neo-vote-button"
                 style={{
-                  padding: '16px 0',
-                  background: '#E53E3E',
+                  padding: '18px 0',
+                  background: '#FF5E5B',
                   color: '#fff',
-                  fontWeight: 900, fontSize: 18, letterSpacing: 1.5,
-                  borderRadius: 12,
+                  fontWeight: 900, fontSize: 20, letterSpacing: 1.5,
                   cursor: disabled ? 'not-allowed' : 'pointer',
                   opacity: disabled ? 0.7 : 1,
                   transition: 'all 0.2s'
@@ -237,13 +274,12 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
               <button
                 onClick={() => handleInteraction('REAL')}
                 disabled={disabled}
-                className="neo-border neo-shadow neo-button"
+                className="neo-border neo-shadow neo-button neo-vote-button"
                 style={{
-                  padding: '16px 0',
+                  padding: '18px 0',
                   background: '#2DBD6E',
                   color: '#fff',
-                  fontWeight: 900, fontSize: 18, letterSpacing: 1.5,
-                  borderRadius: 12,
+                  fontWeight: 900, fontSize: 20, letterSpacing: 1.5,
                   cursor: disabled ? 'not-allowed' : 'pointer',
                   opacity: disabled ? 0.7 : 1,
                   transition: 'all 0.2s'
