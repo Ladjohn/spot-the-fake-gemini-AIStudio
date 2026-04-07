@@ -5,6 +5,7 @@ import { playSound, startMusic, stopMusic } from './services/audioService';
 import { NewsItem, QuizState } from './types';
 import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
+import AnalysisModal from './components/AnalysisModal';
 import { getHighScore, setHighScore } from './utils/storage';
 
 // ─── Loading ───────────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@ const App: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
   const [timeLeft, setTimeLeft] = useState(GAME_CONFIG.TIMER_SECONDS);
+  const [userGuess, setUserGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
   const timerRef = useRef<number | null>(null);
 
   const [gameState, setGameState] = useState<QuizState>({
@@ -210,6 +212,7 @@ const App: React.FC = () => {
     const newLives = isCorrect ? gameState.lives : gameState.lives - 1;
     const willGameOver = newLives <= 0;
 
+    setUserGuess(vote);
     setGameState(prev => {
       const newStreak = isCorrect ? prev.streak + 1 : 0;
       const bonus = newStreak >= 3 ? newStreak * 20 : 0;
@@ -223,6 +226,7 @@ const App: React.FC = () => {
 
   // ── Next question
   const nextQuestion = useCallback(async () => {
+    setUserGuess(null);
     if (currentIndex < quizItems.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setGameState(prev => ({ ...prev, status: 'PLAYING' }));
@@ -259,6 +263,14 @@ const App: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
+      {/* Analysis Modal */}
+      {gameState.status === 'ANALYSIS' && currentItem && userGuess && (
+        <AnalysisModal
+          item={currentItem}
+          userGuess={userGuess}
+          onNext={nextQuestion}
+        />
+      )}
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header style={{

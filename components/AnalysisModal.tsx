@@ -58,71 +58,126 @@ const AnalysisModal: React.FC<Props> = ({
   score = Math.max(0, Math.min(100, score));
 
   const correct = userGuess === item.type;
+  const truthText = item.summary || item.explanation || v.reasoning || "No additional information available.";
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 z-50">
-      <div className="bg-white dark:bg-zinc-900 w-full max-w-lg p-6 rounded-xl border-4 border-black dark:border-white shadow-xl relative">
-        <h1 className="text-3xl font-black text-center mb-4">
-          {correct ? "NAILED IT!" : "OOPS!"}
-        </h1>
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 50, padding: '20px'
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: 20, width: '100%', maxWidth: 420,
+        overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+      }}>
+        {/* Result Banner - Green for correct, Red for wrong */}
+        <div style={{
+          background: correct ? '#2DBD6E' : '#E53E3E',
+          padding: '28px 24px',
+          textAlign: 'center',
+          transition: 'background 0.3s ease'
+        }}>
+          <h1 style={{
+            fontSize: 36, fontWeight: 900, color: '#fff',
+            margin: 0, letterSpacing: 1.2, fontStyle: 'italic'
+          }}>
+            {correct ? "NAILED IT!" : "NOPE!"}
+          </h1>
+          <p style={{
+            fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.9)',
+            margin: '8px 0 0', letterSpacing: 0.5
+          }}>
+            You: <b>{userGuess}</b> &nbsp; vs &nbsp; Truth: <b>{item.type}</b>
+          </p>
+        </div>
 
-        <p className="text-center text-sm text-gray-600 dark:text-gray-300 mb-3">
-          You: <b>{userGuess}</b> &nbsp; vs &nbsp; Truth: <b>{item.type}</b>
-        </p>
-
-        {/* Score Bar */}
-        <div className="mt-4 mb-4">
-          <div className="w-full h-4 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden border-2 border-black dark:border-white">
-            <div
-              className={`h-full transition-all ${score > 60 ? "bg-g-green" : score > 30 ? "bg-g-yellow" : "bg-g-red"}`}
-              style={{ width: `${score}%` }}
-            />
+        {/* Content Section */}
+        <div style={{ padding: '28px 24px' }}>
+          {/* THE TRUTH Box */}
+          <div style={{
+            border: '2px solid #111',
+            borderRadius: 12,
+            padding: '16px',
+            marginBottom: 24,
+            background: '#fafafa'
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              marginBottom: 10
+            }}>
+              {/* Blue icon */}
+              <div style={{
+                width: 24, height: 24,
+                background: '#3B7FF5', borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontWeight: 900, fontSize: 14,
+                flexShrink: 0
+              }}>
+                ⓘ
+              </div>
+              <h3 style={{
+                fontSize: 11, fontWeight: 800, color: '#3B7FF5',
+                margin: 0, letterSpacing: 1.2, textTransform: 'uppercase'
+              }}>
+                THE TRUTH
+              </h3>
+            </div>
+            <p style={{
+              fontSize: 14, fontWeight: 500, color: '#333',
+              margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordWrap: 'break-word'
+            }}>
+              {truthText}
+            </p>
           </div>
 
-          <p className="text-right text-xs font-bold mt-1 text-black dark:text-white">
-            {score}% AUTH
-          </p>
+          {/* Loading indicator placeholder */}
+          <div style={{
+            textAlign: 'center', fontSize: 11, fontWeight: 600,
+            color: '#aaa', letterSpacing: 1, marginBottom: 20,
+            textTransform: 'uppercase'
+          }}>
+            SCANNING VIRAL DATABASE...
+          </div>
         </div>
 
-        {/* Reasoning */}
-        <div className="bg-gray-100 dark:bg-zinc-800 p-4 rounded-lg border-2 border-black dark:border-white mt-4">
-          <h3 className="text-sm font-black mb-2">AI VERIFICATION</h3>
-          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
-            {v.reasoning}
-          </p>
-
-          {v.sources && v.sources.length > 0 && (
-            <div className="mt-3 text-xs">
-              <div className="font-black mb-1">Sources:</div>
-              <ul className="list-disc list-inside text-xs">
-                {v.sources.map((s, i) => (
-                  <li key={i} className="truncate">{String(s)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-3 mt-6">
+        {/* NEXT ROUND Button */}
+        <div style={{ padding: '0 24px 24px' }}>
           <button
             onClick={() => {
               playSound("CLICK");
               onNext();
             }}
-            className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black font-black uppercase border-4 border-black dark:border-white rounded-lg"
-          >
-            Next Round →
-          </button>
-
-          <button
-            onClick={() => {
-              playSound("CLICK");
-              // just close modal if parent provided onClose (keeps API flexible)
-              if (typeof (window as any).closeModal === "function") (window as any).closeModal();
+            style={{
+              width: '100%',
+              padding: '16px 0',
+              background: '#111',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: 16,
+              letterSpacing: 1.5,
+              border: 'none',
+              borderRadius: 12,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              textTransform: 'uppercase'
             }}
-            className="py-3 px-4 bg-white dark:bg-zinc-800 text-black dark:text-white font-black uppercase border-4 border-black dark:border-white rounded-lg"
+            onMouseDown={e => {
+              e.currentTarget.style.transform = 'scale(0.96)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+            }}
+            onMouseUp={e => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            }}
           >
-            Close
+            NEXT ROUND →
           </button>
         </div>
       </div>
