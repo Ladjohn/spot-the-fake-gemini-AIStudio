@@ -432,7 +432,9 @@ const App: React.FC = () => {
           textTransform: 'uppercase'
         }}>
           ROUND {currentIndex + 1}/{totalItems}
-        </div        {/* Lives as dots */}
+        </div>
+
+        {/* Lives as dots */}
         <div style={{ display: 'flex', gap: 8 }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
@@ -447,7 +449,7 @@ const App: React.FC = () => {
             />
           ))}
         </div>
-      </div>iv>
+      </div>
 
       {/* ── Card area ─────────────────────────────────────────────────── */}
       <div style={{ flex: 1, padding: '0px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -462,6 +464,8 @@ const App: React.FC = () => {
         ) : (
           <div style={{ fontSize: 18, fontWeight: 800, color: textColor }}>LOADING...</div>
         )}
+      </div>
+
       {/* ── Bottom Bar (Timer + Skip) ─────────────────────────────────────────────────── */}
       <div style={{
         padding: '16px',
@@ -517,7 +521,8 @@ const App: React.FC = () => {
         >
           <span style={{ fontSize: 16 }}>»</span> SKIP
         </button>
-      </div></div>
+      </div>
+    </div>
   );
 };
 
