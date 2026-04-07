@@ -38,13 +38,16 @@ export default async function handler(req, res) {
       return res.status(200).json(data);
     }
 
-    // 🔥 always return something (no blank UI)
+    // Always return fallback questions
     return res.status(200).json({
       choices: [{
         message: {
           content: JSON.stringify([
-            { headline: "AI warming up...", type: "FAKE" },
-            { headline: "Bananas are berries", type: "REAL" }
+            { headline: "Octopus has 3 hearts", type: "REAL", explanation: "Octopuses have three hearts." },
+            { headline: "Bananas are berries", type: "REAL", explanation: "Botanically, bananas are berries." },
+            { headline: "Penguins live in the Arctic", type: "FAKE", explanation: "Penguins live in Antarctica, not the Arctic." },
+            { headline: "Honey never spoils", type: "REAL", explanation: "Honey can last indefinitely." },
+            { headline: "Humans use only 10% of their brains", type: "FAKE", explanation: "We use virtually all of our brain." }
           ])
         }
       }]
@@ -55,7 +58,11 @@ export default async function handler(req, res) {
       choices: [{
         message: {
           content: JSON.stringify([
-            { headline: "Server busy...", type: "FAKE" }
+            { headline: "Octopus has 3 hearts", type: "REAL", explanation: "Octopuses have three hearts." },
+            { headline: "Bananas are berries", type: "REAL", explanation: "Botanically, bananas are berries." },
+            { headline: "Penguins live in the Arctic", type: "FAKE", explanation: "Penguins live in Antarctica, not the Arctic." },
+            { headline: "Honey never spoils", type: "REAL", explanation: "Honey can last indefinitely." },
+            { headline: "Humans use only 10% of their brains", type: "FAKE", explanation: "We use virtually all of our brain." }
           ])
         }
       }]

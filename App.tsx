@@ -99,6 +99,9 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
 const fallbackItems: NewsItem[] = [
   { id: '1', headline: 'Octopus has 3 hearts', title: 'Octopus has 3 hearts', type: 'REAL', summary: 'Octopuses really do have three hearts — two pump blood to the gills and one pumps it to the body.' } as any,
   { id: '2', headline: 'Scientists taught cats to bark', title: 'Scientists taught cats to bark', type: 'FAKE', summary: 'No such study exists — cats are physically unable to produce dog-like barking sounds.' } as any,
+  { id: '3', headline: 'Bananas are berries', title: 'Bananas are botanically classified as berries', type: 'REAL', summary: 'Bananas are actually berries, while strawberries are not. A berry develops from a single flower\'s ovary.' } as any,
+  { id: '4', headline: 'Penguins live in the Arctic', title: 'Penguins are native to the Arctic region', type: 'FAKE', summary: 'Penguins actually live in the Southern Hemisphere. There are no wild penguins in the Arctic.' } as any,
+  { id: '5', headline: 'Honey never spoils', title: 'Honey is the only food that never expires', type: 'REAL', summary: 'Honey has an indefinite shelf life due to its low moisture content and acidic pH.' } as any,
 ];
 
 // ─── App ───────────────────────────────────────────────────────────────────
