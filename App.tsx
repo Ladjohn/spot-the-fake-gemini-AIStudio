@@ -1,108 +1,60 @@
 // src/App.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { generateQuizRound, preloadRound } from './services/geminiService';
-import { playSound } from './services/audioService';
+import { playSound, startMusic, stopMusic } from './services/audioService';
 import { NewsItem, QuizState } from './types';
 import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
-import Timer from './components/Timer';
-import SkipButton from './components/SkipButton';
 import { getHighScore, setHighScore } from './utils/storage';
 
+// ─── Loading ───────────────────────────────────────────────────────────────
 const LoadingScreen = () => (
-  <div className="min-h-screen flex items-center justify-center text-2xl font-black animate-pulse" style={{ background: '#F5C518' }}>
+  <div style={{
+    minHeight: '100vh', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', fontSize: 22, fontWeight: 900,
+    background: '#F5C518'
+  }}>
     🔍 Loading viral news...
   </div>
 );
 
+// ─── Start Screen ──────────────────────────────────────────────────────────
 const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }> = ({ onStart }) => {
   const best = getHighScore();
-
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: '#F5C518' }}
-    >
-      <div
-        className="bg-white rounded-3xl flex flex-col items-center"
-        style={{
-          width: 320,
-          padding: '36px 28px 40px',
-          boxShadow: '0 6px 32px rgba(0,0,0,0.13)'
-        }}
-      >
-        {/* SF Logo */}
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            background: '#3B7FF5',
-            borderRadius: 12,
-            transform: 'rotate(-6deg)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 20,
-            boxShadow: '0 4px 12px rgba(59,127,245,0.35)'
-          }}
-        >
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 22, letterSpacing: 1 }}>SF</span>
-        </div>
-
-        {/* Title */}
-        <div style={{ textAlign: 'center', marginBottom: 6 }}>
-          <div style={{ fontWeight: 900, fontSize: 40, lineHeight: 1.05, letterSpacing: -1, color: '#111' }}>
-            SPOT<br />THE<br />FAKE
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5C518' }}>
+      <div style={{ background: '#fff', borderRadius: 28, width: 320, padding: '36px 28px 40px', boxShadow: '0 6px 32px rgba(0,0,0,0.13)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <div style={{
+            width: 64, height: 64, background: '#3B7FF5', borderRadius: 12,
+            transform: 'rotate(-6deg)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', boxShadow: '0 4px 12px rgba(59,127,245,0.35)'
+          }}>
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: 22, letterSpacing: 1 }}>SF</span>
           </div>
         </div>
-
-        {/* Subtitle */}
-        <div style={{ fontWeight: 600, fontSize: 14, color: '#555', marginBottom: 24, letterSpacing: 0.5 }}>
+        <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 40, lineHeight: 1.05, letterSpacing: -1, color: '#111', marginBottom: 6 }}>
+          SPOT<br />THE<br />FAKE
+        </div>
+        <div style={{ textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#555', marginBottom: 24, letterSpacing: 0.5 }}>
           Viral News Edition
         </div>
-
-        {/* Your Best */}
-        <div
-          style={{
-            width: '100%',
-            border: '1.5px solid #e0e0e0',
-            borderRadius: 10,
-            padding: '10px 0',
-            textAlign: 'center',
-            marginBottom: 22
-          }}
-        >
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#888', letterSpacing: 1.5, marginBottom: 2 }}>
-            YOUR BEST
-          </div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>
-            {best}
-          </div>
+        <div style={{ border: '1.5px solid #e0e0e0', borderRadius: 10, padding: '10px 0', textAlign: 'center', marginBottom: 22 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#888', letterSpacing: 1.5, marginBottom: 2 }}>YOUR BEST</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
         </div>
-
-        {/* Difficulty label */}
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 2, marginBottom: 12 }}>
+        <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#aaa', letterSpacing: 2, marginBottom: 12 }}>
           SELECT DIFFICULTY
         </div>
-
-        {/* Difficulty buttons */}
-        {(['Easy', 'Medium', 'Hard'] as const).map((d) => (
+        {(['Easy', 'Medium', 'Hard'] as const).map(d => (
           <button
             key={d}
             onClick={() => onStart(d)}
             style={{
-              width: '100%',
-              padding: '14px 0',
-              marginBottom: 10,
-              border: '1.5px solid #ddd',
-              borderRadius: 10,
-              background: '#fff',
-              fontWeight: 800,
-              fontSize: 15,
-              letterSpacing: 1.5,
-              color: '#222',
-              cursor: 'pointer',
-              transition: 'background 0.12s, transform 0.1s'
+              width: '100%', padding: '14px 0', marginBottom: 10,
+              border: '1.5px solid #ddd', borderRadius: 10, background: '#fff',
+              fontWeight: 800, fontSize: 15, letterSpacing: 1.5, color: '#222',
+              cursor: 'pointer'
             }}
             onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.97)')}
             onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
@@ -116,15 +68,20 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
   );
 };
 
+// ─── Fallback data ─────────────────────────────────────────────────────────
 const fallbackItems: NewsItem[] = [
-  { id: "1", headline: "Octopus has 3 hearts", title: "Octopus has 3 hearts", type: "REAL" } as any,
-  { id: "2", headline: "Cats can fly naturally", title: "Cats can fly naturally", type: "FAKE" } as any
+  { id: '1', headline: 'Octopus has 3 hearts', title: 'Octopus has 3 hearts', type: 'REAL', summary: 'Octopuses really do have three hearts — two pump blood to the gills and one pumps it to the body.' } as any,
+  { id: '2', headline: 'Scientists taught cats to bark', title: 'Scientists taught cats to bark', type: 'FAKE', summary: 'No such study exists — cats are physically unable to produce dog-like barking sounds.' } as any,
 ];
 
+// ─── App ───────────────────────────────────────────────────────────────────
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [quizItems, setQuizItems] = useState<NewsItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [soundOn, setSoundOn] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(GAME_CONFIG.TIMER_SECONDS);
+  const timerRef = useRef<number | null>(null);
 
   const [gameState, setGameState] = useState<QuizState>({
     currentRound: 1,
@@ -138,167 +95,263 @@ const App: React.FC = () => {
     highScore: getHighScore()
   });
 
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [lastGuess, setLastGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
+  // ── Preload on mount
+  useEffect(() => { preloadRound(); }, []);
 
-  // 🔥 PRELOAD (important)
-  useEffect(() => {
-    preloadRound();
-  }, []);
-
-  // Save high score when game ends
+  // ── Save high score when game ends
   useEffect(() => {
     if (gameState.status === 'GAME_OVER') {
       const saved = getHighScore();
       if (gameState.score > saved) {
         setHighScore(gameState.score);
-        setGameState(prev => ({ ...prev, highScore: gameState.score }));
       }
+      playSound('GAMEOVER');
     }
   }, [gameState.status]);
 
+  // ── Timer
+  const stopTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    stopTimer();
+    setTimeLeft(GAME_CONFIG.TIMER_SECONDS);
+    timerRef.current = window.setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          stopTimer();
+          setGameState(s => ({ ...s, status: 'GAME_OVER' }));
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [stopTimer]);
+
+  useEffect(() => {
+    if (gameState.status === 'PLAYING') {
+      startTimer();
+    } else {
+      stopTimer();
+    }
+    return stopTimer;
+  }, [gameState.status, currentIndex]);
+
+  // ── Sound toggle
+  const toggleSound = () => {
+    if (soundOn) { stopMusic(); }
+    else { startMusic(); }
+    setSoundOn(prev => !prev);
+  };
+
+  // ── Start game
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
     playSound('CLICK');
     setLoading(true);
-
     setGameState(prev => ({
-      ...prev,
-      score: 0,
-      streak: 0,
+      ...prev, score: 0, streak: 0,
       lives: GAME_CONFIG.MAX_LIVES,
-      status: 'PLAYING',
-      difficulty
+      status: 'PLAYING', difficulty
     }));
-
     try {
       const items = await Promise.race([
         generateQuizRound(5),
-        new Promise<NewsItem[]>((res) => setTimeout(() => res([]), 8000))
+        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 8000))
       ]);
-
       setQuizItems(items.length ? items : fallbackItems);
       setCurrentIndex(0);
-    } catch (e) {
-      console.error(e);
+    } catch {
       setQuizItems(fallbackItems);
     }
-
     setTimeout(() => setLoading(false), 300);
   };
 
+  // ── Vote
   const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
     if (gameState.status !== 'PLAYING') return;
-
     navigator.vibrate?.(15);
 
     const currentItem = quizItems[currentIndex];
     if (!currentItem) return;
 
     const isCorrect = vote === currentItem.type;
-    setLastGuess(vote);
+    const newLives = isCorrect ? gameState.lives : gameState.lives - 1;
+    const willGameOver = newLives <= 0;
 
     setGameState(prev => {
       const newStreak = isCorrect ? prev.streak + 1 : 0;
       const bonus = newStreak >= 3 ? newStreak * 20 : 0;
-
       const newScore = prev.score + (isCorrect ? 100 + bonus : 0);
-      const newLives = isCorrect ? prev.lives : prev.lives - 1;
-
       return {
-        ...prev,
-        score: newScore,
-        streak: newStreak,
-        lives: newLives,
-        status: newLives <= 0 ? 'GAME_OVER' : 'ANALYSIS'
+        ...prev, score: newScore, streak: newStreak, lives: newLives,
+        status: willGameOver ? 'GAME_OVER' : 'ANALYSIS'
       };
     });
 
-    setTimeout(() => setShowAnalysis(true), 250);
-  }, [quizItems, currentIndex, gameState.status]);
+    // Auto-advance only if not game over
+    if (!willGameOver) {
+      setTimeout(() => {
+        nextQuestion();
+      }, 800);
+    }
+  }, [quizItems, currentIndex, gameState.status, gameState.lives]);
 
+  // ── Next question
   const nextQuestion = useCallback(async () => {
     if (currentIndex < quizItems.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setGameState(prev => ({ ...prev, status: 'PLAYING' }));
       return;
     }
-
     setLoading(true);
-
     try {
       const nextItems = await generateQuizRound(5);
       setQuizItems(nextItems.length ? nextItems : fallbackItems);
       setCurrentIndex(0);
-
-      // 🔥 preload next (pro move)
       preloadRound();
-    } catch (e) {
-      console.error(e);
+    } catch {
       setQuizItems(fallbackItems);
     }
-
+    setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     setLoading(false);
   }, [currentIndex, quizItems.length]);
 
   if (loading) return <LoadingScreen />;
-
-  // Show start screen when idle or game over
   if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
     return <StartScreen onStart={startGame} />;
   }
 
   const currentItem = quizItems[currentIndex];
+  const isUrgent = timeLeft <= 8;
+  const totalItems = quizItems.length || 5;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
 
-      {/* 📊 PROGRESS */}
-      <div className="text-xs font-bold text-gray-500 mb-2">
-        Question {currentIndex + 1}
+      {/* ── Header ─────────────────────────────────────────────────── */}
+      <header style={{
+        background: '#fff',
+        padding: '10px 16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '1px solid #eee',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+      }}>
+        {/* SF Logo */}
+        <div style={{
+          width: 36, height: 36, background: '#3B7FF5', borderRadius: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transform: 'rotate(-5deg)', flexShrink: 0
+        }}>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 12, letterSpacing: 0.5 }}>SF</span>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: 28, flex: 1, justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#aaa', letterSpacing: 1.5 }}>STREAK</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#111', lineHeight: 1 }}>{gameState.streak}</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#aaa', letterSpacing: 1.5 }}>SCORE</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
+          </div>
+        </div>
+
+        {/* Sound + Timer circles */}
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {/* Sound toggle */}
+          <button
+            onClick={toggleSound}
+            style={{
+              width: 36, height: 36, borderRadius: '50%',
+              background: soundOn ? '#2DBD6E' : '#ccc',
+              border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', transition: 'background 0.2s'
+            }}
+            aria-label="Toggle sound"
+          >
+            {soundOn ? (
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" strokeWidth="0"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+              </svg>
+            )}
+          </button>
+
+          {/* Timer circle */}
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: isUrgent ? '#E53E3E' : '#F5C518',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.3s'
+          }}>
+            <span style={{ fontWeight: 900, fontSize: 13, color: isUrgent ? '#fff' : '#111' }}>
+              {timeLeft}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Round + Lives row ───────────────────────────────────────── */}
+      <div style={{
+        padding: '10px 16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+      }}>
+        <div style={{
+          background: '#111', color: '#fff',
+          fontWeight: 800, fontSize: 12, letterSpacing: 1,
+          padding: '5px 12px', borderRadius: 20
+        }}>
+          ROUND {currentIndex + 1}/{totalItems}
+        </div>
+
+        {/* Lives as dots */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 12, height: 12, borderRadius: '50%',
+                background: i < gameState.lives ? '#E53E3E' : '#ddd',
+                transition: 'background 0.3s'
+              }}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* 🔥 STREAK */}
-      {gameState.streak > 1 && (
-        <div className="mb-2 text-lg font-black text-orange-500 animate-bounce">
+      {/* ── Streak banner ───────────────────────────────────────────── */}
+      {gameState.streak >= 3 && (
+        <div style={{
+          textAlign: 'center', fontWeight: 900, fontSize: 14,
+          color: '#E97316', marginBottom: 4
+        }}>
           🔥 {gameState.streak} STREAK!
         </div>
       )}
 
-      {/* ⚠️ LAST LIFE */}
-      {gameState.lives === 1 && (
-        <div className="mb-2 text-red-500 font-black animate-pulse">
-          ⚠️ LAST LIFE
-        </div>
-      )}
-
-      {currentItem ? (
-        <>
-          <div className="animate-fade-in">
-            <GameCard
-              item={currentItem}
-              onVote={handleVote}
-              disabled={gameState.status === 'ANALYSIS'}
-            />
-          </div>
-
-          <Timer
-            duration={GAME_CONFIG.TIMER_SECONDS}
-            onTimeUp={() =>
-              setGameState(prev => ({ ...prev, status: 'GAME_OVER' }))
-            }
-            active={gameState.status === 'PLAYING'}
+      {/* ── Card area ───────────────────────────────────────────────── */}
+      <div style={{ flex: 1, padding: '4px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {currentItem ? (
+          <GameCard
+            item={currentItem}
+            onVote={handleVote}
+            disabled={gameState.status === 'ANALYSIS'}
+            difficulty={gameState.difficulty}
           />
-
-          <SkipButton onSkip={nextQuestion} />
-        </>
-      ) : (
-        <button
-          onClick={() => startGame('Medium')}
-          className="px-6 py-3 bg-blue-500 text-white font-black rounded active:scale-95 transition"
-        >
-          Start Game
-        </button>
-      )}
+        ) : (
+          <div style={{ marginTop: 40, fontSize: 16, color: '#888' }}>Loading next round…</div>
+        )}
+      </div>
     </div>
   );
 };
