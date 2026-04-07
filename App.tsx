@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { generateQuizRound, preloadRound } from './services/geminiService';
 import { playSound, startMusic, stopMusic } from './services/audioService';
@@ -25,36 +24,34 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
   const best = getHighScore();
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5C518', padding: '20px' }}>
-      {/* Outer yellow border container */}
-      <div style={{ background: '#F5C518', borderRadius: 32, padding: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
-        {/* Inner white card */}
-        <div style={{ background: '#fff', borderRadius: 24, width: 340, padding: '48px 32px 44px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)' }}>
+      {/* Outer yellow border container with Neo-Brutalist shadow */}
+      <div style={{ background: '#F5C518', borderRadius: 0, padding: 0, boxShadow: '8px 8px 0px 0px #000' }}>
+        {/* Inner white card with thick black border */}
+        <div style={{ background: '#fff', borderRadius: 0, width: 360, padding: '56px 40px 48px', border: '4px solid #000', boxShadow: 'none' }}>
           {/* SF Logo */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
             <div style={{
-              width: 72, height: 72, background: '#3B7FF5', borderRadius: 14,
-              transform: 'rotate(-8deg)', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', boxShadow: '0 6px 16px rgba(59,127,245,0.4)', border: '3px solid #1e5cc8'
+              width: 80, height: 80, background: '#3B7FF5', borderRadius: 0,
+              transform: 'rotate(-12deg)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: '6px 6px 0px 0px #000', border: '4px solid #000'
             }}>
-              <span style={{ color: '#fff', fontWeight: 900, fontSize: 28, letterSpacing: 1.2 }}>SF</span>
+              <span style={{ color: '#fff', fontWeight: 900, fontSize: 32, letterSpacing: 2 }}>SF</span>
             </div>
           </div>
           
           {/* Title */}
-          <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 44, lineHeight: 1.1, letterSpacing: -1.5, color: '#000', marginBottom: 8, fontFamily: 'Space Grotesk, sans-serif' }}>
+          <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 52, lineHeight: 1.0, letterSpacing: -2, color: '#000', marginBottom: 12, fontFamily: 'Space Grotesk, sans-serif' }}>
             SPOT<br />THE<br />FAKE
           </div>
           
-
-          
           {/* Best Score Box */}
-          <div style={{ border: '2px solid #222', borderRadius: 12, padding: '14px 0', textAlign: 'center', marginBottom: 28, background: '#fafafa' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#666', letterSpacing: 1.8, marginBottom: 4, textTransform: 'uppercase' }}>YOUR BEST</div>
-            <div style={{ fontSize: 32, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
+          <div style={{ border: '3px solid #000', borderRadius: 0, padding: '16px 0', textAlign: 'center', marginBottom: 32, background: '#fafafa', boxShadow: '4px 4px 0px 0px #000' }}>
+            <div style={{ fontSize: 10, fontWeight: 900, color: '#666', letterSpacing: 2, marginBottom: 6, textTransform: 'uppercase' }}>YOUR BEST</div>
+            <div style={{ fontSize: 40, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
           </div>
           
           {/* Difficulty Label */}
-          <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#888', letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
+          <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#000', letterSpacing: 2.4, marginBottom: 16, textTransform: 'uppercase' }}>
             SELECT DIFFICULTY
           </div>
           
@@ -63,27 +60,30 @@ const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }
             <button
               key={d}
               onClick={() => onStart(d)}
+              className="neo-border neo-shadow neo-button"
               style={{
-                width: '100%', padding: '16px 0', marginBottom: 12,
-                border: '2px solid #222', borderRadius: 12, background: '#fff',
-                fontWeight: 800, fontSize: 16, letterSpacing: 1.6, color: '#000',
-                cursor: 'pointer', transition: 'all 0.15s ease',
-                fontFamily: 'Inter, sans-serif'
+                width: '100%', padding: '18px 0', marginBottom: 14,
+                border: '3px solid #000', borderRadius: 0, background: '#fff',
+                fontWeight: 900, fontSize: 18, letterSpacing: 2, color: '#000',
+                cursor: 'pointer', transition: 'all 0.1s ease',
+                fontFamily: 'Space Grotesk, sans-serif',
+                boxShadow: '4px 4px 0px 0px #000',
+                textTransform: 'uppercase'
               }}
               onMouseDown={e => {
-                e.currentTarget.style.transform = 'scale(0.96)';
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translate(2px, 2px)';
+                e.currentTarget.style.boxShadow = '2px 2px 0px 0px #000';
               }}
               onMouseUp={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+                e.currentTarget.style.transform = 'translate(0, 0)';
+                e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+                e.currentTarget.style.transform = 'translate(0, 0)';
+                e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.08)';
+                e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
               }}
             >
               {d.toUpperCase()}
@@ -281,6 +281,10 @@ const App: React.FC = () => {
     return () => clearTimeout(t);
   }, [gameState.status, nextQuestion]);
 
+  if (gameState.status === 'IDLE') {
+    return <StartScreen onStart={startGame} />;
+  }
+
   if (loading) return <LoadingScreen />;
   
   // Show scoreboard on game over
@@ -306,10 +310,6 @@ const App: React.FC = () => {
         }}
       />
     );
-  }
-  
-  if (gameState.status === 'IDLE') {
-    return <StartScreen onStart={startGame} />;
   }
 
   const currentItem = quizItems[currentIndex];
@@ -395,6 +395,7 @@ const App: React.FC = () => {
               </div>
             )}
           </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
