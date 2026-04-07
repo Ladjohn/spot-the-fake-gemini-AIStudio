@@ -5,106 +5,268 @@ import { NewsItem, QuizState } from './types';
 import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
 import AnalysisModal from './components/AnalysisModal';
-import Scoreboard from './components/Scoreboard';
 import { getHighScore, setHighScore } from './utils/storage';
 
-// ─── Loading ───────────────────────────────────────────────────────────────
 const LoadingScreen = () => (
-  <div style={{
-    minHeight: '100vh', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', fontSize: 22, fontWeight: 900,
-    background: '#F5C518'
-  }}>
-    🔍 Loading viral news...
+  <div
+    style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: 22,
+      fontWeight: 900,
+      background: '#F5C518',
+      textTransform: 'uppercase',
+      letterSpacing: 1.2,
+    }}
+  >
+    Emergency broadcast: the fake-or-real reactor is spitting sparks...
   </div>
 );
 
-// ─── Start Screen ──────────────────────────────────────────────────────────
 const StartScreen: React.FC<{ onStart: (d: 'Easy' | 'Medium' | 'Hard') => void }> = ({ onStart }) => {
   const best = getHighScore();
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5C518', padding: '20px' }}>
-      {/* Outer yellow border container with Neo-Brutalist shadow */}
-      <div style={{ background: '#F5C518', borderRadius: 0, padding: 0, boxShadow: '8px 8px 0px 0px #000' }}>
-        {/* Inner white card with thick black border */}
-        <div style={{ background: '#fff', borderRadius: 0, width: 360, padding: '56px 40px 48px', border: '4px solid #000', boxShadow: 'none' }}>
-          {/* SF Logo */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
-            <div style={{
-              width: 80, height: 80, background: '#3B7FF5', borderRadius: 0,
-              transform: 'rotate(-12deg)', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', boxShadow: '6px 6px 0px 0px #000', border: '4px solid #000'
-            }}>
-              <span style={{ color: '#fff', fontWeight: 900, fontSize: 32, letterSpacing: 2 }}>SF</span>
-            </div>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background:
+          'linear-gradient(135deg, #f7d748 0%, #f7d748 50%, #ff7a00 50%, #ff7a00 100%)',
+        padding: '20px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage:
+            'repeating-linear-gradient(0deg, transparent 0 34px, rgba(0,0,0,0.09) 34px 38px), repeating-linear-gradient(90deg, transparent 0 34px, rgba(0,0,0,0.09) 34px 38px)',
+          opacity: 0.65,
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        className="neo-start-shell"
+        style={{
+          width: 'min(100%, 420px)',
+          background: '#fffdf7',
+          border: '4px solid #000',
+          boxShadow: '12px 12px 0 #000',
+          padding: '24px',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: -18,
+            right: 18,
+            background: '#00e0b8',
+            border: '4px solid #000',
+            boxShadow: '6px 6px 0 #000',
+            padding: '8px 12px',
+            transform: 'rotate(6deg)',
+            fontSize: 12,
+            fontWeight: 900,
+            letterSpacing: 1.4,
+            textTransform: 'uppercase',
+          }}
+        >
+          Truth Meltdown
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            marginBottom: 24,
+          }}
+        >
+          <div
+            style={{
+              width: 84,
+              height: 84,
+              background: '#3b7ff5',
+              border: '4px solid #000',
+              boxShadow: '8px 8px 0 #000',
+              transform: 'rotate(-10deg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: 30, letterSpacing: 1.6 }}>F.O.R</span>
           </div>
-          
-          {/* Title */}
-          <div style={{ textAlign: 'center', fontWeight: 900, fontSize: 52, lineHeight: 1.0, letterSpacing: -2, color: '#000', marginBottom: 12, fontFamily: 'Space Grotesk, sans-serif' }}>
-            SPOT<br />THE<br />FAKE
+
+          <div
+            style={{
+              background: '#ff5e5b',
+              border: '4px solid #000',
+              boxShadow: '8px 8px 0 #000',
+              padding: '12px 14px',
+              textAlign: 'center',
+              minWidth: 118,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 1.6, textTransform: 'uppercase' }}>Top Score</div>
+            <div style={{ fontSize: 34, fontWeight: 900, lineHeight: 1, marginTop: 6 }}>{best}</div>
           </div>
-          
-          {/* Best Score Box */}
-          <div style={{ border: '3px solid #000', borderRadius: 0, padding: '16px 0', textAlign: 'center', marginBottom: 32, background: '#fafafa', boxShadow: '4px 4px 0px 0px #000' }}>
-            <div style={{ fontSize: 10, fontWeight: 900, color: '#666', letterSpacing: 2, marginBottom: 6, textTransform: 'uppercase' }}>YOUR BEST</div>
-            <div style={{ fontSize: 40, fontWeight: 900, color: '#2DBD6E', lineHeight: 1 }}>{best}</div>
-          </div>
-          
-          {/* Difficulty Label */}
-          <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#000', letterSpacing: 2.4, marginBottom: 16, textTransform: 'uppercase' }}>
-            SELECT DIFFICULTY
-          </div>
-          
-          {/* Difficulty Buttons */}
-          {(['Easy', 'Medium', 'Hard'] as const).map(d => (
-            <button
-              key={d}
-              onClick={() => onStart(d)}
-              className="neo-border neo-shadow neo-button"
+        </div>
+
+        <div
+          style={{
+            fontFamily: "'Arial Black', 'Space Grotesk', sans-serif",
+            fontSize: 'clamp(3rem, 9vw, 4.5rem)',
+            lineHeight: 0.9,
+            letterSpacing: -2.5,
+            textTransform: 'uppercase',
+            color: '#000',
+            marginBottom: 14,
+          }}
+        >
+          Fake
+          <br />
+          Or Real
+        </div>
+
+        <div
+          style={{
+            display: 'inline-block',
+            background: '#fff',
+            border: '3px solid #000',
+            padding: '8px 12px',
+            boxShadow: '5px 5px 0 #000',
+            transform: 'rotate(-2deg)',
+            marginBottom: 20,
+            fontSize: 14,
+            fontWeight: 800,
+            lineHeight: 1.3,
+          }}
+        >
+          Swipe through absurd headlines.
+          <br />
+          Trust your gut. Break the streak if you blink.
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 10,
+            marginBottom: 20,
+          }}
+        >
+          {[
+            { label: 'Rounds', value: '5', bg: '#f7d748' },
+            { label: 'Lives', value: `${GAME_CONFIG.MAX_LIVES}`, bg: '#00e0b8' },
+            { label: 'Mood', value: 'Chaos', bg: '#9f7aea' },
+          ].map(item => (
+            <div
+              key={item.label}
               style={{
-                width: '100%', padding: '18px 0', marginBottom: 14,
-                border: '3px solid #000', borderRadius: 0, background: '#fff',
-                fontWeight: 900, fontSize: 18, letterSpacing: 2, color: '#000',
-                cursor: 'pointer', transition: 'all 0.1s ease',
-                fontFamily: 'Space Grotesk, sans-serif',
-                boxShadow: '4px 4px 0px 0px #000',
-                textTransform: 'uppercase'
-              }}
-              onMouseDown={e => {
-                e.currentTarget.style.transform = 'translate(2px, 2px)';
-                e.currentTarget.style.boxShadow = '2px 2px 0px 0px #000';
-              }}
-              onMouseUp={e => {
-                e.currentTarget.style.transform = 'translate(0, 0)';
-                e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translate(0, 0)';
-                e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.boxShadow = '4px 4px 0px 0px #000';
+                background: item.bg,
+                border: '3px solid #000',
+                padding: '10px 8px',
+                textAlign: 'center',
+                boxShadow: '4px 4px 0 #000',
               }}
             >
-              {d.toUpperCase()}
-            </button>
+              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>{item.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 6 }}>{item.value}</div>
+            </div>
           ))}
+        </div>
+
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 900,
+            letterSpacing: 2.2,
+            textTransform: 'uppercase',
+            marginBottom: 12,
+          }}
+        >
+          Choose Your Chaos
+        </div>
+
+        {(
+          [
+            { level: 'Easy', accent: '#f7d748', note: 'Warm up your lie detector' },
+            { level: 'Medium', accent: '#3b7ff5', note: 'Balanced chaos' },
+            { level: 'Hard', accent: '#ff5e5b', note: 'Maximum misinformation energy' },
+          ] as const
+        ).map(({ level, accent, note }) => (
+          <button
+            key={level}
+            onClick={() => onStart(level)}
+            className="neo-start-button"
+            style={{
+              width: '100%',
+              marginBottom: 14,
+              border: '4px solid #000',
+              background: accent,
+              boxShadow: '7px 7px 0 #000',
+              padding: '16px 18px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontFamily: "'Trebuchet MS', 'Arial Black', sans-serif",
+              color: level === 'Medium' ? '#fff' : '#000',
+              transition: 'transform 0.12s ease, box-shadow 0.12s ease',
+            }}
+          >
+            <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1.1, textTransform: 'uppercase' }}>{level}</div>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.5, marginTop: 4 }}>{note}</div>
+          </button>
+        ))}
+
+        <div
+          style={{
+            marginTop: 8,
+            background: '#000',
+            color: '#fff',
+            padding: '10px 12px',
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: 1.2,
+            textTransform: 'uppercase',
+          }}
+        >
+          No fluff. Just bold cards, weird facts, and hard calls.
         </div>
       </div>
     </div>
   );
 };
 
-// ─── Fallback data ─────────────────────────────────────────────────────────
 const fallbackItems: NewsItem[] = [
-  { id: '1', headline: 'Octopus has 3 hearts', title: 'Octopus has 3 hearts', type: 'REAL', summary: 'Octopuses really do have three hearts — two pump blood to the gills and one pumps it to the body.' } as any,
-  { id: '2', headline: 'Scientists taught cats to bark', title: 'Scientists taught cats to bark', type: 'FAKE', summary: 'No such study exists — cats are physically unable to produce dog-like barking sounds.' } as any,
-  { id: '3', headline: 'Bananas are berries', title: 'Bananas are botanically classified as berries', type: 'REAL', summary: 'Bananas are actually berries, while strawberries are not. A berry develops from a single flower\'s ovary.' } as any,
-  { id: '4', headline: 'Penguins live in the Arctic', title: 'Penguins are native to the Arctic region', type: 'FAKE', summary: 'Penguins actually live in the Southern Hemisphere. There are no wild penguins in the Arctic.' } as any,
-  { id: '5', headline: 'Honey never spoils', title: 'Honey is the only food that never expires', type: 'REAL', summary: 'Honey has an indefinite shelf life due to its low moisture content and acidic pH.' } as any,
+  {
+    id: '1',
+    headline: 'Octopus has 3 hearts',
+    title: 'Octopus has 3 hearts',
+    type: 'REAL',
+    summary: 'Octopuses really do have three hearts - two pump blood to the gills and one pumps it to the body.',
+  } as any,
+  {
+    id: '2',
+    headline: 'Scientists taught cats to bark',
+    title: 'Scientists taught cats to bark',
+    type: 'FAKE',
+    summary: 'No such study exists - cats are physically unable to produce dog-like barking sounds.',
+  } as any,
 ];
 
-// ─── App ───────────────────────────────────────────────────────────────────
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [quizItems, setQuizItems] = useState<NewsItem[]>([]);
@@ -124,31 +286,24 @@ const App: React.FC = () => {
     history: [],
     status: 'IDLE',
     difficulty: 'Medium',
-    highScore: getHighScore()
+    highScore: getHighScore(),
   });
 
-  // ── Preload on mount and start music
-  useEffect(() => { 
+  useEffect(() => {
     preloadRound();
-    if (soundOn) {
-      startMusic();
-    }
-  }, [soundOn]);
+    startMusic();
+  }, []);
 
-  // ── Save high score when game ends
   useEffect(() => {
     if (gameState.status === 'GAME_OVER') {
       const saved = getHighScore();
       if (gameState.score > saved) {
         setHighScore(gameState.score);
-        playSound('WIN');
-      } else {
-        playSound('GAMEOVER');
       }
+      playSound('GAMEOVER');
     }
-  }, [gameState.status]);
+  }, [gameState.status, gameState.score]);
 
-  // ── Timer
   const stopTimer = useCallback(() => {
     if (timerRef.current !== null) {
       window.clearInterval(timerRef.current);
@@ -178,73 +333,76 @@ const App: React.FC = () => {
       stopTimer();
     }
     return stopTimer;
-  }, [gameState.status, currentIndex]);
+  }, [gameState.status, currentIndex, startTimer, stopTimer]);
 
-  // ── Sound toggle
   const toggleSound = () => {
-    if (soundOn) { stopMusic(); }
-    else { startMusic(); }
+    if (soundOn) {
+      stopMusic();
+    } else {
+      startMusic();
+    }
     setSoundOn(prev => !prev);
-    playSound('CLICK');
   };
 
-  // ── Theme toggle
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
-    playSound('CLICK');
   };
 
-  // ── Start game
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
     playSound('CLICK');
     setLoading(true);
-    setUserGuess(null);
-    setTimeLeft(GAME_CONFIG.TIMER_SECONDS);
     setGameState(prev => ({
-      ...prev, score: 0, streak: 0,
+      ...prev,
+      score: 0,
+      streak: 0,
       lives: GAME_CONFIG.MAX_LIVES,
-      status: 'PLAYING', difficulty,
-      totalRoundsPlayed: 0
+      status: 'PLAYING',
+      difficulty,
     }));
+
     try {
       const items = await Promise.race([
         generateQuizRound(5),
-        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 8000))
+        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 8000)),
       ]);
       setQuizItems(items.length ? items : fallbackItems);
       setCurrentIndex(0);
     } catch {
       setQuizItems(fallbackItems);
     }
+
     setTimeout(() => setLoading(false), 300);
   };
 
-  // ── Vote — just updates score/lives/status, no nextQuestion call here
-  const handleVote = useCallback((vote: 'REAL' | 'FAKE') => {
-    if (gameState.status !== 'PLAYING') return;
-    navigator.vibrate?.(15);
+  const handleVote = useCallback(
+    (vote: 'REAL' | 'FAKE') => {
+      if (gameState.status !== 'PLAYING') return;
+      navigator.vibrate?.(15);
 
-    const currentItem = quizItems[currentIndex];
-    if (!currentItem) return;
+      const currentItem = quizItems[currentIndex];
+      if (!currentItem) return;
 
-    const isCorrect = vote === currentItem.type;
-    const newLives = isCorrect ? gameState.lives : gameState.lives - 1;
-    const willGameOver = newLives <= 0;
+      const isCorrect = vote === currentItem.type;
+      const newLives = isCorrect ? gameState.lives : gameState.lives - 1;
+      const willGameOver = newLives <= 0;
 
-    setUserGuess(vote);
-    setGameState(prev => {
-      const newStreak = isCorrect ? prev.streak + 1 : 0;
-      const bonus = newStreak >= 3 ? newStreak * 20 : 0;
-      const newScore = prev.score + (isCorrect ? 100 + bonus : 0);
-      return {
-        ...prev, score: newScore, streak: newStreak, lives: newLives,
-        totalRoundsPlayed: prev.totalRoundsPlayed + 1,
-        status: willGameOver ? 'GAME_OVER' : 'ANALYSIS'
-      };
-    });
-  }, [quizItems, currentIndex, gameState.status, gameState.lives]);
+      setUserGuess(vote);
+      setGameState(prev => {
+        const newStreak = isCorrect ? prev.streak + 1 : 0;
+        const bonus = newStreak >= 3 ? newStreak * 20 : 0;
+        const newScore = prev.score + (isCorrect ? 100 + bonus : 0);
+        return {
+          ...prev,
+          score: newScore,
+          streak: newStreak,
+          lives: newLives,
+          status: willGameOver ? 'GAME_OVER' : 'ANALYSIS',
+        };
+      });
+    },
+    [quizItems, currentIndex, gameState.status, gameState.lives]
+  );
 
-  // ── Next question
   const nextQuestion = useCallback(async () => {
     setUserGuess(null);
     if (currentIndex < quizItems.length - 1) {
@@ -252,132 +410,126 @@ const App: React.FC = () => {
       setGameState(prev => ({ ...prev, status: 'PLAYING' }));
       return;
     }
-    // Load next round of questions
+
     setLoading(true);
     try {
       const nextItems = await generateQuizRound(5);
       setQuizItems(nextItems.length ? nextItems : fallbackItems);
       setCurrentIndex(0);
       preloadRound();
-      setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     } catch {
       setQuizItems(fallbackItems);
-      setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     }
+    setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     setLoading(false);
   }, [currentIndex, quizItems.length]);
 
-  // ── Skip question
   const skipQuestion = () => {
     playSound('CLICK');
-    setUserGuess(null);
     nextQuestion();
   };
 
-  // ── Auto-advance when ANALYSIS — always uses fresh nextQuestion via effect
   useEffect(() => {
     if (gameState.status !== 'ANALYSIS') return;
-    const t = setTimeout(() => { nextQuestion(); }, 3000); // Time to read analysis
+    const t = setTimeout(() => {
+      nextQuestion();
+    }, 10000);
     return () => clearTimeout(t);
   }, [gameState.status, nextQuestion]);
 
-  if (gameState.status === 'IDLE') {
-    return <StartScreen onStart={startGame} />;
-  }
-
   if (loading) return <LoadingScreen />;
-  
-  // Show scoreboard on game over
-  if (gameState.status === 'GAME_OVER') {
-    const previousHighScore = getHighScore();
-    const isNewBest = gameState.score > previousHighScore;
-    
-    return (
-      <Scoreboard
-        finalScore={gameState.score}
-        highScore={previousHighScore}
-        streak={gameState.streak}
-        totalRoundsPlayed={currentIndex + 1}
-        isNewBest={isNewBest}
-        isDarkMode={isDarkMode}
-        onPlayAgain={() => {
-          playSound('CLICK');
-          startGame(gameState.difficulty);
-        }}
-        onBackToMenu={() => {
-          playSound('CLICK');
-          setGameState(prev => ({ ...prev, status: 'IDLE' }));
-        }}
-      />
-    );
+  if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
+    return <StartScreen onStart={startGame} />;
   }
 
   const currentItem = quizItems[currentIndex];
   const isUrgent = timeLeft <= 8;
   const totalItems = quizItems.length || 5;
   const timerPercentage = (timeLeft / GAME_CONFIG.TIMER_SECONDS) * 100;
-  const previousHighScore = getHighScore();
-  const isNewBest = gameState.score > previousHighScore;
 
-  // Theme colors
-  const bgColor = isDarkMode ? '#1a1a1a' : '#fefcf0';
-  const cardBg = isDarkMode ? '#2a2a2a' : '#fff';
+  const bgColor = isDarkMode ? '#151515' : '#f6f1df';
+  const cardBg = isDarkMode ? '#232323' : '#fffdf7';
   const textColor = isDarkMode ? '#fff' : '#000';
-  const headerBg = isDarkMode ? '#111' : '#fff';
+  const headerBg = isDarkMode ? '#0b0b0b' : '#fff';
 
   return (
     <div style={{ minHeight: '100vh', background: bgColor, display: 'flex', flexDirection: 'column', color: textColor }}>
-      {/* Analysis Modal */}
-      {gameState.status === 'ANALYSIS' && currentItem && userGuess && gameState.status !== 'GAME_OVER' && (
-        <AnalysisModal
-          item={currentItem}
-          userGuess={userGuess}
-          onNext={nextQuestion}
-        />
+      {gameState.status === 'ANALYSIS' && currentItem && userGuess && (
+        <AnalysisModal item={currentItem} userGuess={userGuess} onNext={nextQuestion} />
       )}
 
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <header style={{
-        background: headerBg,
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '3px solid #000',
-      }}>
-        {/* SF Logo */}
-        <div style={{
-          width: 40, height: 40, background: '#3B7FF5', borderRadius: 8,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transform: 'rotate(-5deg)', flexShrink: 0, border: '2px solid #000'
-        }}>
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 14, letterSpacing: 0.5 }}>SF</span>
+      <header
+        style={{
+          background: headerBg,
+          padding: '14px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 14,
+          borderBottom: '4px solid #000',
+        }}
+      >
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            background: '#3B7FF5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'rotate(-7deg)',
+            flexShrink: 0,
+            border: '3px solid #000',
+            boxShadow: '5px 5px 0 #000',
+          }}
+        >
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 16, letterSpacing: 0.8 }}>F.O.R</span>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: 32, flex: 1, justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: textColor, lineHeight: 1 }}>{gameState.streak}</div>
+        <div style={{ display: 'flex', gap: 12, flex: 1, justifyContent: 'center' }}>
+          <div
+            style={{
+              minWidth: 86,
+              textAlign: 'center',
+              border: '3px solid #000',
+              background: isDarkMode ? '#1e1e1e' : '#F7D748',
+              boxShadow: '4px 4px 0 #000',
+              padding: '8px 10px',
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>Heat</div>
+            <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 4 }}>{gameState.streak}</div>
           </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
+          <div
+            style={{
+              minWidth: 96,
+              textAlign: 'center',
+              border: '3px solid #000',
+              background: '#FF7A00',
+              boxShadow: '4px 4px 0 #000',
+              padding: '8px 10px',
+              color: '#000',
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.3, textTransform: 'uppercase' }}>Score</div>
+            <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, marginTop: 4 }}>{gameState.score}</div>
           </div>
         </div>
 
-        {/* Sound + Theme */}
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          {/* Sound Toggle */}
           <button
             onClick={toggleSound}
             className="neo-border neo-shadow-sm neo-button"
             style={{
-              width: 40, height: 40, borderRadius: '50%',
-              background: soundOn ? '#2DBD6E' : '#E53E3E',
+              width: 42,
+              height: 42,
+              background: soundOn ? '#2DBD6E' : '#FF5E5B',
               cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: '#fff',
               position: 'relative',
-              transition: 'all 0.2s'
             }}
           >
             {soundOn ? (
@@ -395,18 +547,18 @@ const App: React.FC = () => {
               </div>
             )}
           </button>
-
-          {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
             className="neo-border neo-shadow-sm neo-button"
             style={{
-              width: 40, height: 40, borderRadius: '50%',
-              background: '#F5C518',
+              width: 42,
+              height: 42,
+              background: '#F7D748',
               cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: '#000',
-              transition: 'all 0.2s'
             }}
           >
             {isDarkMode ? (
@@ -422,44 +574,63 @@ const App: React.FC = () => {
         </div>
       </header>
 
-        {/* ── Round + Lives row ──────────────────────────────────────── */}
-      <div style={{
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: headerBg,
-        borderBottom: isDarkMode ? '1px solid #333' : '1px solid #eee'
-      }}>
-        <div className="neo-border" style={{
-          background: isDarkMode ? '#333' : '#000', color: isDarkMode ? '#fff' : '#fff',
-          fontWeight: 900, fontSize: 12, letterSpacing: 1.5,
-          padding: '6px 14px', borderRadius: 4,
-          textTransform: 'uppercase'
-        }}>
-          ROUND {currentIndex + 1}/{totalItems}
+      <div
+        style={{
+          padding: '14px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 14,
+          background: headerBg,
+          borderBottom: '4px solid #000',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div
+          style={{
+            background: '#000',
+            color: '#fff',
+            fontWeight: 900,
+            fontSize: 12,
+            letterSpacing: 1.6,
+            padding: '8px 14px',
+            textTransform: 'uppercase',
+            border: '3px solid #000',
+            boxShadow: '4px 4px 0 #FF7A00',
+          }}
+        >
+          Case {currentIndex + 1}/{totalItems}
         </div>
 
-        {/* Lives as dots */}
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
               key={i}
               className="neo-border"
               style={{
-                width: 14, height: 14, borderRadius: '50%',
-                background: i < gameState.lives ? '#E53E3E' : isDarkMode ? '#444' : '#ddd',
-                transition: 'background 0.3s',
-                boxShadow: i < gameState.lives ? '2px 2px 0px 0px #000' : 'none'
+                width: 18,
+                height: 18,
+                background: i < gameState.lives ? '#FF5E5B' : isDarkMode ? '#333' : '#d9d4c7',
+                boxShadow: '2px 2px 0 #000',
               }}
             />
           ))}
         </div>
       </div>
 
-      {/* ── Card area ─────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, padding: '0px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        {currentItem && gameState.status === 'PLAYING' ? (
+      <div
+        style={{
+          flex: 1,
+          padding: '22px 16px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 18,
+        }}
+      >
+        {currentItem ? (
           <GameCard
-            key={currentItem.id}
             item={currentItem}
             onVote={handleVote}
             disabled={gameState.status === 'ANALYSIS'}
@@ -471,60 +642,71 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* ── Bottom Bar (Timer + Skip) ─────────────────────────────────────────────────── */}
-      <div style={{
-        padding: '16px',
-        background: headerBg,
-        borderTop: '3px solid #000',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16
-      }}>
-        {/* Timer Bar */}
-        <div className="neo-border" style={{
-          flex: 1,
-          height: 32,
-          background: cardBg,
-          borderRadius: 16,
-          overflow: 'hidden',
-          position: 'relative'
-        }}>
-          <div style={{
-            width: `${timerPercentage}%`,
-            height: '100%',
-            background: isUrgent ? '#E53E3E' : '#3B7FF5',
-            transition: 'width 1s linear, background 0.3s'
-          }} />
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 900, color: timerPercentage < 55 ? textColor : '#fff',
-            letterSpacing: 0.5
-          }}>
-            <span style={{ marginRight: 4 }}>🕒</span> {timeLeft}s
+      <div
+        style={{
+          padding: '16px',
+          background: headerBg,
+          borderTop: '4px solid #000',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        <div
+          className="neo-border"
+          style={{
+            flex: 1,
+            height: 38,
+            background: cardBg,
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '4px 4px 0 #000',
+          }}
+        >
+          <div
+            style={{
+              width: `${timerPercentage}%`,
+              height: '100%',
+              background: isUrgent ? '#FF5E5B' : '#3B7FF5',
+              transition: 'width 1s linear, background 0.3s',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 13,
+              fontWeight: 900,
+              color: timerPercentage < 55 ? textColor : '#fff',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+            }}
+          >
+            Clock {timeLeft}s
           </div>
         </div>
 
-        {/* Skip Button */}
         <button
           onClick={skipQuestion}
           className="neo-border neo-shadow-sm neo-button"
           style={{
             padding: '0 20px',
-            height: 40,
-            background: cardBg,
-            color: textColor,
+            height: 44,
+            background: '#00E0B8',
+            color: '#000',
             fontWeight: 900,
             fontSize: 14,
-            letterSpacing: 1,
-            borderRadius: 8,
+            letterSpacing: 1.2,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: 6
+            gap: 6,
           }}
         >
-          <span style={{ fontSize: 16 }}>»</span> SKIP
+          <span style={{ fontSize: 16 }}>-></span> PASS
         </button>
       </div>
     </div>
