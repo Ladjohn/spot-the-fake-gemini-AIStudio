@@ -212,6 +212,10 @@ const fallbackItems: NewsItem[] = [
   } as any,
 ];
 
+function getSafeRound(items: NewsItem[] | null | undefined) {
+  return items && items.length ? items : fallbackItems;
+}
+
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [quizItems, setQuizItems] = useState<NewsItem[]>([]);
@@ -310,11 +314,11 @@ const App: React.FC = () => {
         generateQuizRound(5),
         new Promise<NewsItem[]>(res => setTimeout(() => res([]), 8000)),
       ]);
-      setQuizItems(items.length ? items : fallbackItems);
-      setCurrentIndex(0);
+      setQuizItems(getSafeRound(items));
     } catch {
       setQuizItems(fallbackItems);
     }
+    setCurrentIndex(0);
 
     setTimeout(() => setLoading(false), 300);
   };
@@ -359,12 +363,12 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       const nextItems = await generateQuizRound(5);
-      setQuizItems(nextItems.length ? nextItems : fallbackItems);
-      setCurrentIndex(0);
+      setQuizItems(getSafeRound(nextItems));
       preloadRound();
     } catch {
       setQuizItems(fallbackItems);
     }
+    setCurrentIndex(0);
     setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     setLoading(false);
   }, [currentIndex, quizItems.length]);
