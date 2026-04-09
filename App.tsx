@@ -20,7 +20,7 @@ const LoadingScreen = () => (
       color: '#000',
     }}
   >
-    Loading Fake Or Real...
+    Loading Statements...
   </div>
 );
 
@@ -147,7 +147,11 @@ const StartScreen: React.FC<{
             color: helperCardText,
           }}
         >
-          Can you spot fact from fiction?
+          Can you spot fake statements from real ones?
+        </div>
+
+        <div style={{ color: labelText, fontSize: 10, fontWeight: 900, letterSpacing: 1.4, margin: '-8px 0 20px', textTransform: 'uppercase' }}>
+          Science, culture, tech, history, sports, geography and more
         </div>
 
         {isGameOver && (
@@ -201,6 +205,10 @@ const StartScreen: React.FC<{
             {d}
           </button>
         ))}
+
+        <div style={{ color: labelText, fontSize: 10, fontWeight: 800, lineHeight: 1.4, marginTop: 6, opacity: 0.85 }}>
+          Questions powered by Open Trivia Database.
+        </div>
       </div>
     </div>
   );

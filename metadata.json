@@ -1,5 +1,5 @@
 {
-  "name": "Spot-the-Fake: Viral News Edition",
-  "description": "A high-speed, AI-powered quiz game where you challenge your media literacy against viral news, powered by Gemini 3 Pro.",
+  "name": "Fake Or Real: Statement Challenge",
+  "description": "A fast fake-or-real quiz game with true and false statements across science, culture, tech, history, geography, entertainment and more.",
   "requestFramePermissions": []
 }
