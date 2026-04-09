@@ -159,7 +159,7 @@ const StartScreen: React.FC<{
               marginBottom: 22,
             }}
           >
-            <div style={{ border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: '#FF7A00', padding: '12px 10px', textAlign: 'center', color: '#000' }}>
+            <div style={{ border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: '#9EE8EB', padding: '12px 10px', textAlign: 'center', color: '#000' }}>
               <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Your Score</div>
               <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{currentScore}</div>
             </div>
@@ -186,8 +186,8 @@ const StartScreen: React.FC<{
               padding: '18px 16px',
               marginBottom: 14,
               border: `3px solid ${panelBorder}`,
-              background: d === 'Easy' ? '#F7D548' : d === 'Medium' ? '#3B7FF5' : '#FF5A5F',
-              color: d === 'Medium' ? '#fff' : '#000',
+              background: d === 'Easy' ? '#F7D548' : d === 'Medium' ? '#A6FCDB' : '#FF5A5F',
+              color: '#000',
               fontWeight: 900,
               fontSize: 20,
               letterSpacing: 1.2,
@@ -355,7 +355,7 @@ const App: React.FC = () => {
     try {
       const items = await Promise.race([
         generateQuizRound(5),
-        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 8000)),
+        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 12000)),
       ]);
       setQuizItems(getSafeRound(items));
     } catch {

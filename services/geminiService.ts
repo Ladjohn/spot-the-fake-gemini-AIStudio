@@ -1,9 +1,11 @@
 import { NewsItem } from '../types';
+import { getSeenHeadlines, setSeenHeadlines } from '../utils/storage';
 
 const ENDPOINT = '/api/openrouter';
+const MAX_RECENT_HEADLINES = 120;
 
 let cachedRound: NewsItem[] | null = null;
-const recentHeadlines: string[] = [];
+const recentHeadlines: string[] = getSeenHeadlines();
 
 const FALLBACK_ITEMS: Array<Omit<NewsItem, 'id'>> = [
   {
@@ -138,6 +140,171 @@ const FALLBACK_ITEMS: Array<Omit<NewsItem, 'id'>> = [
     imagePrompt: 'city rooftops white roofs aerial urban heat',
     title: 'Cities are painting rooftops white to reduce urban heat',
   } as any,
+  {
+    headline: 'Researchers built solar panels that work better during light rain',
+    summary: 'Some solar research explores how weather conditions and specialized coatings affect energy capture.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Science',
+    difficulty: 'Hard',
+    explanation: 'Scientists do experiment with panel materials and coatings to improve efficiency in mixed weather conditions.',
+    imagePrompt: 'solar panels light rain rooftop clean energy',
+    title: 'Researchers built solar panels that work better during light rain',
+  } as any,
+  {
+    headline: 'A mayor required all office meetings to begin with karaoke warmups',
+    summary: 'There is no credible reporting showing a city government mandated karaoke before meetings.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Politics',
+    difficulty: 'Medium',
+    explanation: 'This sounds comedic rather than administrative and is not backed by real reporting.',
+    imagePrompt: 'city office meeting microphones conference room',
+    title: 'A mayor required all office meetings to begin with karaoke warmups',
+  } as any,
+  {
+    headline: 'Hospitals are testing AI tools that help predict patient deterioration earlier',
+    summary: 'Many hospitals and research groups are studying AI systems that flag clinical risk earlier.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Health',
+    difficulty: 'Medium',
+    explanation: 'Predictive models are already being explored to support earlier care decisions in hospitals.',
+    imagePrompt: 'hospital monitors ai dashboard doctors ward',
+    title: 'Hospitals are testing AI tools that help predict patient deterioration earlier',
+  } as any,
+  {
+    headline: 'A streaming app released a feature that changes movie endings based on your zodiac sign',
+    summary: 'No major streaming platform has a credible feature that rewrites endings based on astrology.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Culture',
+    difficulty: 'Hard',
+    explanation: 'This claim is designed to sound viral, but there is no trustworthy evidence it exists.',
+    imagePrompt: 'streaming app tv zodiac symbols couch living room',
+    title: 'A streaming app released a feature that changes movie endings based on your zodiac sign',
+  } as any,
+  {
+    headline: 'Engineers developed bricks that lock together without mortar for faster housing builds',
+    summary: 'Interlocking brick systems are a real construction approach in some projects.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Tech',
+    difficulty: 'Easy',
+    explanation: 'Modular and interlocking building methods are used to reduce labor and speed up construction.',
+    imagePrompt: 'construction workers interlocking bricks housing build',
+    title: 'Engineers developed bricks that lock together without mortar for faster housing builds',
+  } as any,
+  {
+    headline: 'A theme park hired crows to retrieve dropped phones from roller coaster tracks',
+    summary: 'No credible evidence supports the claim that a theme park trained crows for phone recovery.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Culture',
+    difficulty: 'Medium',
+    explanation: 'Training wild birds for this purpose would be unusual and is not backed by reliable reports.',
+    imagePrompt: 'theme park roller coaster maintenance crow bird',
+    title: 'A theme park hired crows to retrieve dropped phones from roller coaster tracks',
+  } as any,
+  {
+    headline: 'Scientists mapped hidden groundwater using satellites and machine learning',
+    summary: 'Remote sensing and machine learning are real tools used in groundwater and climate research.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Science',
+    difficulty: 'Hard',
+    explanation: 'Satellite data is increasingly combined with machine learning to study hard-to-observe environmental systems.',
+    imagePrompt: 'satellite earth groundwater data visualization science',
+    title: 'Scientists mapped hidden groundwater using satellites and machine learning',
+  } as any,
+  {
+    headline: 'A school district replaced detention with mandatory nap pods for every student',
+    summary: 'There is no credible evidence of a school district universally replacing detention with nap pods.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Politics',
+    difficulty: 'Easy',
+    explanation: 'The claim sounds shareable, but it is not supported by reliable reporting or policy records.',
+    imagePrompt: 'school hallway nap pod classroom futuristic education',
+    title: 'A school district replaced detention with mandatory nap pods for every student',
+  } as any,
+  {
+    headline: 'Researchers created fabric that helps cool the wearer in direct sunlight',
+    summary: 'Advanced cooling textiles and reflective fabrics are an active area of real materials research.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Health',
+    difficulty: 'Medium',
+    explanation: 'Scientists are developing wearable materials designed to reduce heat load in hot environments.',
+    imagePrompt: 'cooling fabric clothing sunlight material science',
+    title: 'Researchers created fabric that helps cool the wearer in direct sunlight',
+  } as any,
+  {
+    headline: 'A company launched shoes that automatically post your step count to your boss',
+    summary: 'There is no credible product launch showing workplace reporting shoes like this.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Tech',
+    difficulty: 'Medium',
+    explanation: 'This is a satirical-sounding privacy nightmare rather than a verified product announcement.',
+    imagePrompt: 'smart shoes step tracker office tech product',
+    title: 'A company launched shoes that automatically post your step count to your boss',
+  } as any,
+  {
+    headline: 'Cities are using sensors in trees to monitor heat stress during summer',
+    summary: 'Urban environmental monitoring increasingly uses sensors to track temperature and plant stress.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Politics',
+    difficulty: 'Hard',
+    explanation: 'Smart-city and environmental programs do deploy sensors to understand local heat patterns.',
+    imagePrompt: 'city trees sensors summer heat urban monitoring',
+    title: 'Cities are using sensors in trees to monitor heat stress during summer',
+  } as any,
+  {
+    headline: 'Researchers discovered that humming for 30 seconds fully charges your phone battery',
+    summary: 'There is no scientific basis for charging a phone battery by humming into it.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Science',
+    difficulty: 'Easy',
+    explanation: 'The energy involved is nowhere near what a phone battery needs, and the claim is not real.',
+    imagePrompt: 'phone battery charging microphone humming sound waves',
+    title: 'Researchers discovered that humming for 30 seconds fully charges your phone battery',
+  } as any,
+  {
+    headline: 'Doctors are studying whether virtual reality can reduce pain during procedures',
+    summary: 'Virtual reality has been studied as a pain and anxiety management tool in medical settings.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Health',
+    difficulty: 'Easy',
+    explanation: 'VR is already being explored to distract patients and reduce distress during some treatments.',
+    imagePrompt: 'hospital patient virtual reality headset doctor care',
+    title: 'Doctors are studying whether virtual reality can reduce pain during procedures',
+  } as any,
+  {
+    headline: 'A coastal town replaced police sirens with whale songs to improve community calm',
+    summary: 'No credible public safety program has replaced police sirens with whale songs.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Culture',
+    difficulty: 'Hard',
+    explanation: 'This sounds whimsical, but there is no trustworthy evidence that such a change happened.',
+    imagePrompt: 'police siren coastal town whale ocean street',
+    title: 'A coastal town replaced police sirens with whale songs to improve community calm',
+  } as any,
+  {
+    headline: 'Scientists designed concrete that stores heat to improve building efficiency',
+    summary: 'Researchers are exploring thermal-storage building materials, including specialized concrete.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Tech',
+    difficulty: 'Hard',
+    explanation: 'Some construction materials are being engineered to better manage heat and energy usage.',
+    imagePrompt: 'concrete building energy efficiency modern architecture',
+    title: 'Scientists designed concrete that stores heat to improve building efficiency',
+  } as any,
 ];
 
 async function askLLM(payload: any) {
@@ -157,13 +324,15 @@ function normalizeHeadline(headline: string) {
 function rememberHeadlines(items: NewsItem[]) {
   for (const item of items) {
     const normalized = normalizeHeadline(item.headline || item.title || '');
-    if (!normalized) continue;
+    if (!normalized || recentHeadlines.includes(normalized)) continue;
     recentHeadlines.unshift(normalized);
   }
 
-  if (recentHeadlines.length > 30) {
-    recentHeadlines.length = 30;
+  if (recentHeadlines.length > MAX_RECENT_HEADLINES) {
+    recentHeadlines.length = MAX_RECENT_HEADLINES;
   }
+
+  setSeenHeadlines(recentHeadlines);
 }
 
 function isRecentHeadline(headline: string) {
@@ -224,18 +393,19 @@ function getFallbackRound(count: number): NewsItem[] {
 }
 
 async function requestFreshRound(count: number): Promise<NewsItem[]> {
-  const recentBlock = recentHeadlines.slice(0, 15).join(' | ');
+  const recentBlock = recentHeadlines.slice(0, 40).join(' | ');
+  const requestedCount = Math.max(count + 4, count * 2);
 
   const res = await askLLM({
     messages: [
       {
         role: 'system',
         content:
-          'Return ONLY a JSON array. Create diverse viral-news quiz items across politics, tech, science, culture, and health. Mix real and fake items. Avoid repeating previous topics or wording. Each item must include headline, type, category, difficulty, explanation, and imagePrompt. Keep explanations short, factual, and educational.',
+          'Return ONLY a JSON array. Create diverse viral-news quiz items across politics, tech, science, culture, and health. Mix real and fake items. Avoid repeating previous topics or wording. Each item must include headline, type, category, difficulty, explanation, and imagePrompt. Keep explanations short, factual, and educational. Every headline should be clearly different from the others in topic and wording.',
       },
       {
         role: 'user',
-        content: `Generate ${count} unique viral news quiz items in JSON format:
+        content: `Generate ${requestedCount} unique viral news quiz items in JSON format:
 [
   {
     "headline": "...",
@@ -249,6 +419,7 @@ async function requestFreshRound(count: number): Promise<NewsItem[]> {
 
 Rules:
 - Do not reuse or closely paraphrase any recent headlines.
+- Do not produce duplicates within this same response.
 - Make the set feel varied in subject, tone, and geography.
 - Avoid Elon Musk, octopus hearts, cats barking, and other overused examples unless absolutely necessary.
 - Recent headlines to avoid: ${recentBlock || 'none'}`,
@@ -262,14 +433,23 @@ Rules:
   const parsed = safeParse(content);
   if (!parsed || !Array.isArray(parsed)) throw new Error('Parse failed');
 
+  const seenThisBatch = new Set<string>();
   const formatted = parsed
     .map((item: any, index: number) => mapToNewsItem(item, index))
-    .filter((item: NewsItem) => !isRecentHeadline(item.headline));
+    .filter((item: NewsItem) => {
+      const normalized = normalizeHeadline(item.headline);
+      if (!normalized || isRecentHeadline(item.headline) || seenThisBatch.has(normalized)) {
+        return false;
+      }
+      seenThisBatch.add(normalized);
+      return true;
+    });
 
-  if (!formatted.length) throw new Error('All generated items were duplicates');
+  if (formatted.length < count) throw new Error('Not enough unique generated items');
 
-  rememberHeadlines(formatted);
-  return formatted.slice(0, count);
+  const selected = formatted.slice(0, count);
+  rememberHeadlines(selected);
+  return selected;
 }
 
 export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
