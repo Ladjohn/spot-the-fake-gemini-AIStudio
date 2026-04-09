@@ -24,15 +24,36 @@ const DIFFICULTY_COLORS: Record<string, { bg: string; text: string }> = {
   Hard: { bg: '#ffe7e7', text: '#000' },
 };
 
+const FALLBACK_IMAGE = `data:image/svg+xml,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <rect width="900" height="600" fill="#F5C518"/>
+  <rect x="55" y="55" width="790" height="490" rx="28" fill="#fff" stroke="#000" stroke-width="18"/>
+  <rect x="140" y="145" width="620" height="115" rx="10" fill="#111"/>
+  <text x="450" y="224" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="900" fill="#fff">FAKE?</text>
+  <rect x="140" y="335" width="620" height="115" rx="10" fill="#3B7FF5"/>
+  <text x="450" y="414" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="900" fill="#fff">REAL?</text>
+</svg>
+`)}`;
+
+const CATEGORY_IMAGE_URLS: Record<string, string> = {
+  Science: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=900&q=78',
+  Tech: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=78',
+  Politics: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=78',
+  Culture: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=78',
+  Health: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=900&q=78',
+};
+
 const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty, isDarkMode = false }) => {
-  const [imgSrc, setImgSrc] = useState(item?.imageUrl || '/placeholder.png');
+  const [imgSrc, setImgSrc] = useState(item?.imageUrl || FALLBACK_IMAGE);
   const [loaded, setLoaded] = useState(false);
+  const [imageFallbackStep, setImageFallbackStep] = useState(0);
 
   const hasVoted = useRef(false);
 
   useEffect(() => {
     setLoaded(false);
-    setImgSrc(item?.imageUrl || '/placeholder.png');
+    setImageFallbackStep(0);
+    setImgSrc(item?.imageUrl || FALLBACK_IMAGE);
     hasVoted.current = false;
   }, [item]);
 
@@ -76,11 +97,21 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
               loading="eager"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              onError={e => {
-                const image = e.target as HTMLImageElement;
-                if (!image.src.endsWith('/placeholder.png')) {
-                  image.src = '/placeholder.png';
+              onError={() => {
+                const categoryFallback = (category && CATEGORY_IMAGE_URLS[category]) || CATEGORY_IMAGE_URLS.Culture;
+
+                if (imageFallbackStep === 0 && imgSrc !== categoryFallback) {
+                  setImageFallbackStep(1);
+                  setImgSrc(categoryFallback);
+                  return;
                 }
+
+                if (imageFallbackStep <= 1 && imgSrc !== FALLBACK_IMAGE) {
+                  setImageFallbackStep(2);
+                  setImgSrc(FALLBACK_IMAGE);
+                  return;
+                }
+
                 setLoaded(true);
               }}
               style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}
