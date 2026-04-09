@@ -265,7 +265,20 @@ function buildImageUrl(rawPrompt: string, category?: string) {
 }
 
 function getSafeImageUrl(context?: WikipediaContext | null, imagePrompt?: string, category?: string) {
-  return context?.thumbnailUrl || '/placeholder.png';
+  return context?.thumbnailUrl || getCategoryImageUrl(category || 'Culture');
+}
+
+function getCategoryImageUrl(category: string) {
+  const imageIds: Record<string, string> = {
+    Science: 'photo-1532094349884-543bc11b234d',
+    Tech: 'photo-1518770660439-4636190af475',
+    Politics: 'photo-1529107386315-e1a2ed48a620',
+    Culture: 'photo-1529156069898-49953e39b3ac',
+    Health: 'photo-1505751172876-fa1923c5c528',
+  };
+
+  const imageId = imageIds[category] || imageIds.Culture;
+  return `https://images.unsplash.com/${imageId}?auto=format&fit=crop&w=900&q=78`;
 }
 
 function getGameCategory(triviaCategory?: string): NewsItem['category'] {

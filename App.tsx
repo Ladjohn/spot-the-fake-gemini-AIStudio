@@ -56,8 +56,8 @@ const LoadingScreen = () => {
       }}
     >
       <div className="neo-card loading-card" style={{ background: '#fff', padding: '28px 22px', maxWidth: 430 }}>
-        <div className="for-logo" style={{ width: 62, height: 62, margin: '0 auto 22px', background: '#3B7FF5', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #000', boxShadow: '6px 6px 0 #000', transform: 'rotate(-8deg)' }}>
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 20, letterSpacing: 1 }}>F.O.R</span>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 22 }}>
+          <LogoMark size={62} fontSize={20} />
         </div>
         <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>
           Loading
@@ -104,6 +104,37 @@ const ThemeIcon: React.FC<{ dark?: boolean }> = ({ dark = false }) => (
   )
 );
 
+const LogoMark: React.FC<{ size?: number; fontSize?: number; borderColor?: string; shadowColor?: string; rounded?: number }> = ({
+  size = 72,
+  fontSize = 24,
+  borderColor = '#000',
+  shadowColor = '#000',
+  rounded = 0,
+}) => (
+  <div
+    className="for-logo-build"
+    style={{
+      width: size,
+      height: size,
+      background: '#3B7FF5',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: `6px 6px 0 ${shadowColor}`,
+      border: `3px solid ${borderColor}`,
+      borderRadius: rounded,
+      flexShrink: 0,
+      fontSize,
+    }}
+  >
+    <span className="for-logo-letter for-logo-letter-f">F</span>
+    <span className="for-logo-dot">.</span>
+    <span className="for-logo-letter for-logo-letter-o">O</span>
+    <span className="for-logo-dot for-logo-dot-late">.</span>
+    <span className="for-logo-letter for-logo-letter-r">R</span>
+  </div>
+);
+
 const StartScreen: React.FC<{
   onStart: (d: 'Easy' | 'Medium' | 'Hard') => void;
   isDarkMode?: boolean;
@@ -141,23 +172,7 @@ const StartScreen: React.FC<{
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
-          <div
-            className="for-logo"
-            style={{
-              width: 72,
-              height: 72,
-              background: '#3B7FF5',
-              transform: 'rotate(-8deg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: `6px 6px 0 ${panelBorder}`,
-              border: `3px solid ${panelBorder}`,
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: '#fff', fontWeight: 900, fontSize: 24, letterSpacing: 1 }}>F.O.R</span>
-          </div>
+          <LogoMark borderColor={panelBorder} shadowColor={panelBorder} />
         </div>
 
         <div
@@ -636,7 +651,7 @@ const App: React.FC = () => {
   const totalItems = quizItems.length || 5;
   const timerPercentage = (timeLeft / GAME_CONFIG.TIMER_SECONDS) * 100;
 
-  const bgColor = isDarkMode ? '#1a1a1a' : '#fefcf0';
+  const bgColor = '#F5C518';
   const cardBg = isDarkMode ? '#2a2a2a' : '#fff';
   const textColor = isDarkMode ? '#fff' : '#000';
   const headerBg = isDarkMode ? '#111' : '#fff';
@@ -661,23 +676,7 @@ const App: React.FC = () => {
           borderBottom: `3px solid ${borderColor}`,
         }}
       >
-        <div
-          className="for-logo"
-          style={{
-            width: 40,
-            height: 40,
-            background: '#3B7FF5',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transform: 'rotate(-5deg)',
-            flexShrink: 0,
-            border: `2px solid ${borderColor}`,
-          }}
-        >
-          <span style={{ color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: 0.4 }}>F.O.R</span>
-        </div>
+        <LogoMark size={42} fontSize={14} borderColor={borderColor} shadowColor={borderColor} rounded={8} />
 
         <div style={{ display: 'flex', gap: 24, flex: 1, justifyContent: 'center', flexWrap: 'wrap', minWidth: 0 }}>
           <div style={{ textAlign: 'center' }}>
@@ -829,7 +828,7 @@ const App: React.FC = () => {
               letterSpacing: 0.5,
             }}
           >
-            TIMER {timeLeft}s
+            {timeLeft}s
           </div>
         </div>
 
