@@ -205,10 +205,6 @@ const StartScreen: React.FC<{
             {d}
           </button>
         ))}
-
-        <div style={{ color: labelText, fontSize: 10, fontWeight: 800, lineHeight: 1.4, marginTop: 6, opacity: 0.85 }}>
-          Questions powered by Open Trivia Database.
-        </div>
       </div>
     </div>
   );
@@ -362,8 +358,8 @@ const App: React.FC = () => {
 
     try {
       const items = await Promise.race([
-        generateQuizRound(5),
-        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 12000)),
+        generateQuizRound(5, difficulty),
+        new Promise<NewsItem[]>(res => setTimeout(() => res([]), 15000)),
       ]);
       setQuizItems(getSafeRound(items));
     } catch {
@@ -413,16 +409,16 @@ const App: React.FC = () => {
 
     setLoading(true);
     try {
-      const nextItems = await generateQuizRound(5);
+      const nextItems = await generateQuizRound(5, gameState.difficulty);
       setQuizItems(getSafeRound(nextItems));
-      preloadRound();
+      preloadRound(gameState.difficulty);
     } catch {
       setQuizItems(fallbackItems);
     }
     setCurrentIndex(0);
     setGameState(prev => ({ ...prev, status: 'PLAYING' }));
     setLoading(false);
-  }, [currentIndex, quizItems.length]);
+  }, [currentIndex, quizItems.length, gameState.difficulty]);
 
   const skipQuestion = () => {
     playSound('CLICK');

@@ -77,7 +77,10 @@ const GameCard: React.FC<GameCardProps> = ({ item, onVote, disabled, difficulty,
               decoding="async"
               onLoad={() => setLoaded(true)}
               onError={e => {
-                (e.target as HTMLImageElement).src = '/placeholder.png';
+                const image = e.target as HTMLImageElement;
+                if (!image.src.endsWith('/placeholder.png')) {
+                  image.src = '/placeholder.png';
+                }
                 setLoaded(true);
               }}
               style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}

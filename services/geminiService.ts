@@ -2,9 +2,20 @@ import { NewsItem } from '../types';
 import { getSeenHeadlines, setSeenHeadlines } from '../utils/storage';
 
 const TRIVIA_ENDPOINT = 'https://opentdb.com/api.php';
+const WIKIPEDIA_SEARCH_ENDPOINT = 'https://en.wikipedia.org/w/api.php';
+const WIKIPEDIA_SUMMARY_ENDPOINT = 'https://en.wikipedia.org/api/rest_v1/page/summary';
 const MAX_RECENT_HEADLINES = 120;
+const SUMMARY_TIMEOUT_MS = 3500;
 
-let cachedRound: NewsItem[] | null = null;
+type GameDifficulty = 'Easy' | 'Medium' | 'Hard';
+type WikipediaContext = {
+  title: string;
+  extract: string;
+  pageUrl?: string;
+  thumbnailUrl?: string;
+};
+
+let cachedRound: { difficulty: GameDifficulty; items: NewsItem[] } | null = null;
 const recentHeadlines: string[] = getSeenHeadlines();
 
 const FALLBACK_ITEMS: Array<Omit<NewsItem, 'id'>> = [
@@ -142,10 +153,11 @@ const FALLBACK_ITEMS: Array<Omit<NewsItem, 'id'>> = [
   } as any,
 ];
 
-async function fetchTriviaQuestions(count: number) {
+async function fetchTriviaQuestions(count: number, difficulty: GameDifficulty) {
   const url = new URL(TRIVIA_ENDPOINT);
   url.searchParams.set('amount', String(count));
   url.searchParams.set('type', 'boolean');
+  url.searchParams.set('difficulty', difficulty.toLowerCase());
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error('Trivia request failed');
@@ -156,6 +168,17 @@ async function fetchTriviaQuestions(count: number) {
   }
 
   return data.results;
+}
+
+function withTimeout<T>(promise: Promise<T>, fallback: T, timeoutMs = SUMMARY_TIMEOUT_MS): Promise<T> {
+  return new Promise(resolve => {
+    const timeout = window.setTimeout(() => resolve(fallback), timeoutMs);
+
+    promise
+      .then(resolve)
+      .catch(() => resolve(fallback))
+      .finally(() => window.clearTimeout(timeout));
+  });
 }
 
 function decodeHtml(value: string) {
@@ -169,6 +192,50 @@ function decodeHtml(value: string) {
 
 function normalizeHeadline(headline: string) {
   return headline.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function cleanStatementForSearch(statement: string) {
+  return statement
+    .replace(/^(is|are|was|were|do|does|did|can|could|would|should)\s+/i, '')
+    .replace(/\?$/g, '')
+    .replace(/\b(true|false)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function fetchWikipediaContext(statement: string): Promise<WikipediaContext | null> {
+  const searchUrl = new URL(WIKIPEDIA_SEARCH_ENDPOINT);
+  searchUrl.searchParams.set('action', 'query');
+  searchUrl.searchParams.set('list', 'search');
+  searchUrl.searchParams.set('format', 'json');
+  searchUrl.searchParams.set('origin', '*');
+  searchUrl.searchParams.set('srlimit', '1');
+  searchUrl.searchParams.set('srsearch', cleanStatementForSearch(statement));
+
+  const searchRes = await fetch(searchUrl.toString());
+  if (!searchRes.ok) return null;
+
+  const searchData = await searchRes.json();
+  const bestTitle = searchData?.query?.search?.[0]?.title;
+  if (!bestTitle) return null;
+
+  const summaryRes = await fetch(`${WIKIPEDIA_SUMMARY_ENDPOINT}/${encodeURIComponent(bestTitle)}`);
+  if (!summaryRes.ok) return null;
+
+  const summaryData = await summaryRes.json();
+  const extract = String(summaryData?.extract || '').trim();
+  if (!extract) return null;
+
+  return {
+    title: String(summaryData?.title || bestTitle),
+    extract,
+    pageUrl: summaryData?.content_urls?.desktop?.page,
+    thumbnailUrl: summaryData?.thumbnail?.source,
+  };
+}
+
+async function getWikipediaContext(statement: string) {
+  return withTimeout(fetchWikipediaContext(statement), null);
 }
 
 function rememberHeadlines(items: NewsItem[]) {
@@ -197,6 +264,10 @@ function buildImageUrl(rawPrompt: string, category?: string) {
   return `https://image.pollinations.ai/prompt/${prompt}?width=900&height=600&nologo=true&model=flux`;
 }
 
+function getSafeImageUrl(context?: WikipediaContext | null, imagePrompt?: string, category?: string) {
+  return context?.thumbnailUrl || '/placeholder.png';
+}
+
 function getGameCategory(triviaCategory?: string): NewsItem['category'] {
   const category = (triviaCategory || '').toLowerCase();
 
@@ -213,26 +284,40 @@ function getGameDifficulty(triviaDifficulty?: string): NewsItem['difficulty'] {
   return 'Medium';
 }
 
-function mapTriviaToNewsItem(item: any, index: number): NewsItem {
+function buildTruthSummary(statement: string, isReal: boolean, context?: WikipediaContext | null) {
+  const truthLine = `Correct answer: ${isReal ? 'REAL' : 'FAKE'}.`;
+
+  if (!context) {
+    return `${truthLine} This statement was checked against the quiz database, but extra encyclopedia context was not available before the round started.`;
+  }
+
+  const trimmedExtract = context.extract.length > 420
+    ? `${context.extract.slice(0, 420).replace(/\s+\S*$/, '')}...`
+    : context.extract;
+
+  return `${truthLine}\n\nQuick context from Wikipedia (${context.title}): ${trimmedExtract}`;
+}
+
+async function mapTriviaToNewsItem(item: any, index: number): Promise<NewsItem> {
   const statement = decodeHtml(String(item.question || 'No statement')).replace(/\s+/g, ' ').trim();
   const isReal = item.correct_answer === 'True';
   const category = getGameCategory(item.category);
   const difficulty = getGameDifficulty(item.difficulty);
   const imagePrompt = `${statement} trivia quiz ${category}`;
-  const truthLabel = isReal ? 'real' : 'fake';
-  const summary = `This statement is ${truthLabel}. Open Trivia Database lists the correct true/false answer as ${item.correct_answer}.`;
+  const wikiContext = await getWikipediaContext(statement);
+  const summary = buildTruthSummary(statement, isReal, wikiContext);
 
   return {
     id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
     title: statement,
     headline: statement,
     type: isReal ? 'REAL' : 'FAKE',
-    imageUrl: buildImageUrl(imagePrompt, category),
+    imageUrl: getSafeImageUrl(wikiContext, imagePrompt, category),
     summary,
     explanation: summary,
     category,
     difficulty,
-    source: 'Open Trivia Database',
+    source: wikiContext?.pageUrl || 'Open Trivia Database',
     imagePrompt,
   };
 }
@@ -246,7 +331,7 @@ function mapFallbackToNewsItem(item: Omit<NewsItem, 'id'>, index: number): NewsI
     id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
     title: headline,
     headline,
-    imageUrl: buildImageUrl(item.imagePrompt || headline, category),
+    imageUrl: getSafeImageUrl(null, item.imagePrompt || headline, category),
     source: 'Fallback question bank',
   } as NewsItem;
 }
@@ -280,10 +365,11 @@ function getFallbackRound(count: number): NewsItem[] {
   return mapped;
 }
 
-async function requestFreshRound(count: number): Promise<NewsItem[]> {
+async function requestFreshRound(count: number, difficulty: GameDifficulty): Promise<NewsItem[]> {
   const requestedCount = Math.min(50, Math.max(count + 8, count * 3));
-  const triviaItems = await fetchTriviaQuestions(requestedCount);
-  const uniqueItems = uniqueOnly(triviaItems.map(mapTriviaToNewsItem));
+  const triviaItems = await fetchTriviaQuestions(requestedCount, difficulty);
+  const mappedItems = await Promise.all(triviaItems.map(mapTriviaToNewsItem));
+  const uniqueItems = uniqueOnly(mappedItems);
 
   if (uniqueItems.length < count) {
     throw new Error('Not enough unique trivia statements');
@@ -294,26 +380,32 @@ async function requestFreshRound(count: number): Promise<NewsItem[]> {
   return selected;
 }
 
-export async function generateQuizRound(count = 5): Promise<NewsItem[]> {
+export async function generateQuizRound(count = 5, difficulty: GameDifficulty = 'Medium'): Promise<NewsItem[]> {
   try {
-    if (cachedRound && cachedRound.length >= count) {
-      const data = cachedRound.slice(0, count);
+    if (cachedRound?.difficulty === difficulty && cachedRound.items.length >= count) {
+      const data = cachedRound.items.slice(0, count);
       cachedRound = null;
       rememberHeadlines(data);
       return data;
     }
 
-    return await requestFreshRound(count);
+    return await requestFreshRound(count, difficulty);
   } catch (err) {
     console.error(err);
     return getFallbackRound(count);
   }
 }
 
-export async function preloadRound() {
+export async function preloadRound(difficulty: GameDifficulty = 'Medium') {
   try {
-    cachedRound = await requestFreshRound(5);
+    cachedRound = {
+      difficulty,
+      items: await requestFreshRound(5, difficulty),
+    };
   } catch {
-    cachedRound = getFallbackRound(5);
+    cachedRound = {
+      difficulty,
+      items: getFallbackRound(5),
+    };
   }
 }
