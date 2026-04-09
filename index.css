@@ -30,6 +30,24 @@ body {
   100% { background-position: -200% 0; }
 }
 
+@keyframes for-logo-dance {
+  0%, 100% { transform: rotate(-8deg) translateY(0) scale(1); }
+  25% { transform: rotate(-13deg) translateY(-7px) scale(1.04); }
+  50% { transform: rotate(-5deg) translateY(0) scale(1); }
+  75% { transform: rotate(-10deg) translateY(-4px) scale(1.02); }
+}
+
+@keyframes for-logo-shine {
+  0% { transform: translateX(-140%) rotate(25deg); }
+  55%, 100% { transform: translateX(140%) rotate(25deg); }
+}
+
+@keyframes score-pop {
+  0% { transform: scale(0.65) rotate(-2deg); opacity: 0; }
+  65% { transform: scale(1.08) rotate(1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease;
 }
@@ -47,14 +65,48 @@ body {
   box-shadow: 2px 2px 0px 0px #000;
 }
 
+.neo-button {
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+}
+
+.neo-button:hover:not(:disabled) {
+  filter: brightness(1.04);
+  transform: translate(-2px, -2px);
+}
+
 .neo-button:active {
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px 0px #000;
+  transform: translate(3px, 3px) scale(0.98) !important;
+  box-shadow: 1px 1px 0px 0px #000 !important;
 }
 
 .neo-card {
   border: 3px solid #000;
   box-shadow: 8px 8px 0px 0px #000;
+}
+
+.for-logo {
+  animation: for-logo-dance 3.4s ease-in-out infinite;
+  overflow: hidden;
+  position: relative;
+  will-change: transform;
+}
+
+.for-logo::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+  animation: for-logo-shine 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.score-card {
+  animation: fade-in 0.28s ease-out;
+}
+
+.score-pop {
+  animation: score-pop 0.45s cubic-bezier(0.2, 1.4, 0.3, 1) both;
 }
 
 .neo-start-shell::before {

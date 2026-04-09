@@ -7,22 +7,68 @@ import GameCard from './components/GameCard';
 import AnalysisModal from './components/AnalysisModal';
 import { getHighScore, getThemePreference, setHighScore, setThemePreference } from './utils/storage';
 
-const LoadingScreen = () => (
-  <div
-    style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 22,
-      fontWeight: 900,
-      background: '#F5C518',
-      color: '#000',
-    }}
-  >
-    Loading Statements...
-  </div>
-);
+const LOADING_LINES = [
+  'Scanning the internet for deadly questions...',
+  'Reading people\'s minds for suspicious facts...',
+  'Polishing fake facts until they sparkle...',
+  'Asking a raccoon if this is real...',
+  'Loading questions with maximum drama...',
+  'Interrogating Wikipedia in a dark room...',
+  'Teaching the truth to wear a disguise...',
+  'Shuffling lies into the deck...',
+  'Calling our unpaid fact goblins...',
+  'Warming up the lie detector...',
+  'Checking if the Moon has Wi-Fi...',
+  'Making easy questions feel overconfident...',
+  'Hiding the real answer behind a moustache...',
+  'Feeding trivia into the chaos machine...',
+  'Preparing fresh traps for clever brains...',
+];
+
+let loadingLineBag: string[] = [];
+
+function getRandomLoadingLine() {
+  if (!loadingLineBag.length) {
+    loadingLineBag = [...LOADING_LINES].sort(() => Math.random() - 0.5);
+  }
+
+  return loadingLineBag.pop() || LOADING_LINES[0];
+}
+
+function buzz(pattern: number | number[] = 12) {
+  navigator.vibrate?.(pattern);
+}
+
+const LoadingScreen = () => {
+  const [line] = useState(getRandomLoadingLine);
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#F5C518',
+        color: '#000',
+        padding: 24,
+        textAlign: 'center',
+      }}
+    >
+      <div className="neo-card loading-card" style={{ background: '#fff', padding: '28px 22px', maxWidth: 430 }}>
+        <div className="for-logo" style={{ width: 62, height: 62, margin: '0 auto 22px', background: '#3B7FF5', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #000', boxShadow: '6px 6px 0 #000', transform: 'rotate(-8deg)' }}>
+          <span style={{ color: '#fff', fontWeight: 900, fontSize: 20, letterSpacing: 1 }}>F.O.R</span>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>
+          Loading
+        </div>
+        <div style={{ fontSize: 'clamp(22px, 7vw, 34px)', lineHeight: 1.05, fontWeight: 900, fontFamily: 'Space Grotesk, sans-serif', textTransform: 'uppercase' }}>
+          {line}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SpeakerIcon: React.FC<{ muted?: boolean }> = ({ muted = false }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -60,12 +106,8 @@ const ThemeIcon: React.FC<{ dark?: boolean }> = ({ dark = false }) => (
 
 const StartScreen: React.FC<{
   onStart: (d: 'Easy' | 'Medium' | 'Hard') => void;
-  currentScore?: number;
-  highScore?: number;
-  isGameOver?: boolean;
   isDarkMode?: boolean;
-}> = ({ onStart, currentScore = 0, highScore = 0, isGameOver = false, isDarkMode = false }) => {
-  const shownHighScore = Math.max(getHighScore(), highScore);
+}> = ({ onStart, isDarkMode = false }) => {
   const pageBg = isDarkMode ? '#111111' : '#F5C518';
   const panelBg = isDarkMode ? '#1f1f1f' : '#fff';
   const panelBorder = isDarkMode ? '#fff' : '#000';
@@ -73,8 +115,9 @@ const StartScreen: React.FC<{
   const helperCardBg = isDarkMode ? '#2a2a2a' : '#fff';
   const helperCardText = isDarkMode ? '#f5f5f5' : '#000';
   const labelText = isDarkMode ? '#d4d4d4' : '#111';
-  const endMessageBg = isDarkMode ? '#2b2b2b' : '#111';
-  const endMessageText = '#fff';
+  const handleDifficultyClick = (difficulty: 'Easy' | 'Medium' | 'Hard') => {
+    onStart(difficulty);
+  };
 
   return (
     <div
@@ -99,6 +142,7 @@ const StartScreen: React.FC<{
       >
         <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
           <div
+            className="for-logo"
             style={{
               width: 72,
               height: 72,
@@ -154,37 +198,15 @@ const StartScreen: React.FC<{
           Science, culture, tech, history, sports, geography and more
         </div>
 
-        {isGameOver && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 12,
-              marginBottom: 22,
-            }}
-          >
-            <div style={{ border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: '#9EE8EB', padding: '12px 10px', textAlign: 'center', color: '#000' }}>
-              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Your Score</div>
-              <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{currentScore}</div>
-            </div>
-            <div style={{ border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: '#EE5BAA', padding: '12px 10px', textAlign: 'center', color: '#000' }}>
-              <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>High Score</div>
-              <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{shownHighScore}</div>
-            </div>
-            <div style={{ gridColumn: '1 / -1', border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: endMessageBg, color: endMessageText, padding: '12px 14px', fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>
-              {currentScore >= shownHighScore ? 'New high score. Absolute menace.' : 'Round over. Hit play and beat it.'}
-            </div>
-          </div>
-        )}
-
         <div style={{ textAlign: 'left', fontSize: 11, fontWeight: 900, color: labelText, letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
-          {isGameOver ? 'Play Again' : 'Select Difficulty'}
+          Select Difficulty
         </div>
 
         {(['Easy', 'Medium', 'Hard'] as const).map(d => (
           <button
             key={d}
-            onClick={() => onStart(d)}
+            onClick={() => handleDifficultyClick(d)}
+            className="neo-button neo-shadow"
             style={{
               width: '100%',
               padding: '18px 16px',
@@ -205,6 +227,130 @@ const StartScreen: React.FC<{
             {d}
           </button>
         ))}
+
+      </div>
+    </div>
+  );
+};
+
+const ScoreBoard: React.FC<{
+  score: number;
+  highScore: number;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  onPlayAgain: () => void;
+  onChangeDifficulty: () => void;
+}> = ({ score, highScore, difficulty, onPlayAgain, onChangeDifficulty }) => {
+  const previousBest = Math.max(highScore, getHighScore());
+  const personalBest = Math.max(score, previousBest);
+  const isNewBest = score > previousBest;
+  const headline = isNewBest ? 'LEGEND!' : 'BUSTED!';
+  const subtitle = isNewBest ? 'New personal best. Suspiciously brilliant.' : 'You believed the lies.';
+
+  const handleShare = async () => {
+    buzz([10, 25, 10]);
+    const text = `I scored ${score} in Fake Or Real on ${difficulty} mode. Can you beat me?`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Fake Or Real', text });
+      } else {
+        await navigator.clipboard?.writeText(text);
+        alert('Score copied. Send it to someone brave.');
+      }
+    } catch {
+      // Sharing can be cancelled by the player; keep the score screen calm.
+    }
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#EF4338',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 22,
+        color: '#000',
+      }}
+    >
+      <div
+        className="score-card neo-card"
+        style={{
+          width: '100%',
+          maxWidth: 430,
+          background: '#fff',
+          borderRadius: 14,
+          padding: 'clamp(22px, 6vw, 34px) clamp(18px, 5vw, 26px)',
+          textAlign: 'center',
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: 'clamp(36px, 12vw, 62px)', lineHeight: 0.9, fontWeight: 900, letterSpacing: -2, fontFamily: 'Space Grotesk, sans-serif' }}>
+          {headline}
+        </h1>
+        <p style={{ margin: '12px 0 26px', fontSize: 14, fontWeight: 900 }}>
+          {subtitle}
+        </p>
+
+        <div
+          style={{
+            background: '#050505',
+            color: '#fff',
+            padding: '22px 16px',
+            margin: '0 auto 24px',
+            borderRadius: 8,
+            transform: 'rotate(1.5deg)',
+            border: '3px solid #000',
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>
+            Final Score
+          </div>
+          <div className="score-pop" style={{ fontSize: 'clamp(56px, 18vw, 96px)', lineHeight: 0.9, fontWeight: 900, color: '#F5C518', letterSpacing: -4 }}>
+            {score}
+          </div>
+        </div>
+
+        <div className="neo-border" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', marginBottom: 22, fontWeight: 900, fontSize: 13 }}>
+          <span>Your Personal Best</span>
+          <span style={{ color: '#3B7FF5' }}>{personalBest}</span>
+        </div>
+
+        <div className="neo-border" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', marginBottom: 24, fontWeight: 900, fontSize: 13 }}>
+          <span>Mode Played</span>
+          <span>{difficulty}</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
+          <button
+            className="neo-border neo-shadow neo-button"
+            onClick={() => {
+              buzz(20);
+              onPlayAgain();
+            }}
+            style={{ minHeight: 58, background: '#3B7FF5', color: '#fff', borderRadius: 8, fontWeight: 900, letterSpacing: 1.5, cursor: 'pointer', textTransform: 'uppercase' }}
+          >
+            Play Again
+          </button>
+          <button
+            className="neo-border neo-shadow neo-button"
+            onClick={handleShare}
+            style={{ minHeight: 58, background: '#fff', color: '#000', borderRadius: 8, fontWeight: 900, letterSpacing: 1.5, cursor: 'pointer', textTransform: 'uppercase' }}
+          >
+            Share
+          </button>
+        </div>
+
+        <button
+          className="neo-button"
+          onClick={() => {
+            buzz(12);
+            onChangeDifficulty();
+          }}
+          style={{ marginTop: 20, background: 'transparent', border: 0, color: '#000', fontWeight: 900, letterSpacing: 1.5, cursor: 'pointer', textTransform: 'uppercase' }}
+        >
+          Change Difficulty
+        </button>
       </div>
     </div>
   );
@@ -262,6 +408,27 @@ const App: React.FC = () => {
     preloadRound();
     startMusic();
   }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopMusic();
+        return;
+      }
+
+      if (soundOn) {
+        startMusic();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', stopMusic);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', stopMusic);
+    };
+  }, [soundOn]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -328,6 +495,7 @@ const App: React.FC = () => {
   }, [gameState.status, currentIndex, startTimer, stopTimer]);
 
   const toggleSound = () => {
+    buzz(12);
     if (soundOn) {
       stopMusic();
     } else {
@@ -337,6 +505,7 @@ const App: React.FC = () => {
   };
 
   const toggleTheme = () => {
+    buzz(12);
     setIsDarkMode(prev => {
       const nextIsDark = !prev;
       setThemePreference(nextIsDark ? 'dark' : 'light');
@@ -345,6 +514,7 @@ const App: React.FC = () => {
   };
 
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
+    buzz(20);
     playSound('CLICK');
     setLoading(true);
     setGameState(prev => ({
@@ -421,8 +591,15 @@ const App: React.FC = () => {
   }, [currentIndex, quizItems.length, gameState.difficulty]);
 
   const skipQuestion = () => {
+    buzz(10);
     playSound('CLICK');
     nextQuestion();
+  };
+
+  const showDifficultyScreen = () => {
+    stopTimer();
+    setUserGuess(null);
+    setGameState(prev => ({ ...prev, status: 'IDLE' }));
   };
 
   useEffect(() => {
@@ -434,14 +611,22 @@ const App: React.FC = () => {
   }, [gameState.status, nextQuestion]);
 
   if (loading) return <LoadingScreen />;
-  if (gameState.status === 'IDLE' || gameState.status === 'GAME_OVER') {
+  if (gameState.status === 'IDLE') {
     return (
       <StartScreen
         onStart={startGame}
-        currentScore={gameState.score}
-        highScore={Math.max(gameState.highScore, getHighScore())}
-        isGameOver={gameState.status === 'GAME_OVER'}
         isDarkMode={isDarkMode}
+      />
+    );
+  }
+  if (gameState.status === 'GAME_OVER') {
+    return (
+      <ScoreBoard
+        score={gameState.score}
+        highScore={Math.max(gameState.highScore, getHighScore())}
+        difficulty={gameState.difficulty}
+        onPlayAgain={() => startGame(gameState.difficulty)}
+        onChangeDifficulty={showDifficultyScreen}
       />
     );
   }
@@ -477,6 +662,7 @@ const App: React.FC = () => {
         }}
       >
         <div
+          className="for-logo"
           style={{
             width: 40,
             height: 40,

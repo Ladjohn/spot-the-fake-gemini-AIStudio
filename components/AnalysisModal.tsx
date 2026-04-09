@@ -161,7 +161,9 @@ const AnalysisModal: React.FC<Props> = ({ item, userGuess, verification, onNext 
 
         <div style={{ padding: '0 24px 24px' }}>
           <button
+            className="neo-button"
             onClick={() => {
+              navigator.vibrate?.(12);
               playSound('CLICK');
               onNext();
             }}
