@@ -661,7 +661,11 @@ const App: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: bgColor, display: 'flex', flexDirection: 'column', color: textColor }}>
       {gameState.status === 'ANALYSIS' && currentItem && userGuess && (
-        <AnalysisModal item={currentItem} userGuess={userGuess} onNext={nextQuestion} />
+        <AnalysisModal 
+  item={currentItem} 
+  userGuess={userGuess} 
+  onNext={nextQuestion} 
+  isDarkMode={isDarkMode} />
       )}
 
       <header
