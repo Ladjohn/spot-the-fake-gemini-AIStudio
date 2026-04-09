@@ -5,7 +5,7 @@ import { NewsItem, QuizState } from './types';
 import { GAME_CONFIG } from './constants';
 import GameCard from './components/GameCard';
 import AnalysisModal from './components/AnalysisModal';
-import { getHighScore, setHighScore } from './utils/storage';
+import { getHighScore, getThemePreference, setHighScore, setThemePreference } from './utils/storage';
 
 const LoadingScreen = () => (
   <div
@@ -63,8 +63,18 @@ const StartScreen: React.FC<{
   currentScore?: number;
   highScore?: number;
   isGameOver?: boolean;
-}> = ({ onStart, currentScore = 0, highScore = 0, isGameOver = false }) => {
+  isDarkMode?: boolean;
+}> = ({ onStart, currentScore = 0, highScore = 0, isGameOver = false, isDarkMode = false }) => {
   const shownHighScore = Math.max(getHighScore(), highScore);
+  const pageBg = isDarkMode ? '#111111' : '#F5C518';
+  const panelBg = isDarkMode ? '#1f1f1f' : '#fff';
+  const panelBorder = isDarkMode ? '#fff' : '#000';
+  const panelText = isDarkMode ? '#fff' : '#000';
+  const helperCardBg = isDarkMode ? '#2a2a2a' : '#fff';
+  const helperCardText = isDarkMode ? '#f5f5f5' : '#000';
+  const labelText = isDarkMode ? '#d4d4d4' : '#111';
+  const endMessageBg = isDarkMode ? '#2b2b2b' : '#111';
+  const endMessageText = '#fff';
 
   return (
     <div
@@ -73,7 +83,7 @@ const StartScreen: React.FC<{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#F5C518',
+        background: pageBg,
         padding: '20px',
       }}
     >
@@ -81,10 +91,10 @@ const StartScreen: React.FC<{
         style={{
           width: '100%',
           maxWidth: 380,
-          background: '#fff',
-          border: '4px solid #000',
-          boxShadow: '10px 10px 0 #000',
-          padding: '28px 24px 22px',
+          background: panelBg,
+          border: `4px solid ${panelBorder}`,
+          boxShadow: `10px 10px 0 ${panelBorder}`,
+          padding: 'clamp(20px, 5vw, 28px) clamp(18px, 5vw, 24px) 22px',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', marginBottom: 24, gap: 16 }}>
@@ -97,8 +107,8 @@ const StartScreen: React.FC<{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '6px 6px 0 #000',
-              border: '3px solid #000',
+              boxShadow: `6px 6px 0 ${panelBorder}`,
+              border: `3px solid ${panelBorder}`,
               flexShrink: 0,
             }}
           >
@@ -110,10 +120,10 @@ const StartScreen: React.FC<{
           style={{
             textAlign: 'left',
             fontWeight: 900,
-            fontSize: 46,
+            fontSize: 'clamp(36px, 10vw, 46px)',
             lineHeight: 0.95,
             letterSpacing: -1.5,
-            color: '#000',
+            color: panelText,
             marginBottom: 12,
             fontFamily: 'Space Grotesk, sans-serif',
             textTransform: 'uppercase',
@@ -126,14 +136,15 @@ const StartScreen: React.FC<{
 
         <div
           style={{
-            border: '3px solid #000',
-            boxShadow: '5px 5px 0 #000',
-            background: '#fff',
+            border: `3px solid ${panelBorder}`,
+            boxShadow: `5px 5px 0 ${panelBorder}`,
+            background: helperCardBg,
             padding: '12px 14px',
             marginBottom: 22,
             fontSize: 16,
             fontWeight: 700,
             lineHeight: 1.35,
+            color: helperCardText,
           }}
         >
           Can you spot fact from fiction?
@@ -148,21 +159,21 @@ const StartScreen: React.FC<{
               marginBottom: 22,
             }}
           >
-            <div style={{ border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#FF7A00', padding: '12px 10px', textAlign: 'center' }}>
+            <div style={{ border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: '#FF7A00', padding: '12px 10px', textAlign: 'center', color: '#000' }}>
               <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>Your Score</div>
               <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{currentScore}</div>
             </div>
-            <div style={{ border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#00D1B2', padding: '12px 10px', textAlign: 'center' }}>
+            <div style={{ border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: '#EE5BAA', padding: '12px 10px', textAlign: 'center', color: '#000' }}>
               <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 }}>High Score</div>
               <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>{shownHighScore}</div>
             </div>
-            <div style={{ gridColumn: '1 / -1', border: '3px solid #000', boxShadow: '5px 5px 0 #000', background: '#111', color: '#fff', padding: '12px 14px', fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ gridColumn: '1 / -1', border: `3px solid ${panelBorder}`, boxShadow: `5px 5px 0 ${panelBorder}`, background: endMessageBg, color: endMessageText, padding: '12px 14px', fontWeight: 800, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 }}>
               {currentScore >= shownHighScore ? 'New high score. Absolute menace.' : 'Round over. Hit play and beat it.'}
             </div>
           </div>
         )}
 
-        <div style={{ textAlign: 'left', fontSize: 11, fontWeight: 900, color: '#111', letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
+        <div style={{ textAlign: 'left', fontSize: 11, fontWeight: 900, color: labelText, letterSpacing: 2.2, marginBottom: 14, textTransform: 'uppercase' }}>
           {isGameOver ? 'Play Again' : 'Select Difficulty'}
         </div>
 
@@ -174,7 +185,7 @@ const StartScreen: React.FC<{
               width: '100%',
               padding: '18px 16px',
               marginBottom: 14,
-              border: '3px solid #000',
+              border: `3px solid ${panelBorder}`,
               background: d === 'Easy' ? '#F7D548' : d === 'Medium' ? '#3B7FF5' : '#FF5A5F',
               color: d === 'Medium' ? '#fff' : '#000',
               fontWeight: 900,
@@ -182,7 +193,7 @@ const StartScreen: React.FC<{
               letterSpacing: 1.2,
               cursor: 'pointer',
               textAlign: 'left',
-              boxShadow: '6px 6px 0 #000',
+              boxShadow: `6px 6px 0 ${panelBorder}`,
               fontFamily: 'Space Grotesk, sans-serif',
               textTransform: 'uppercase',
             }}
@@ -221,7 +232,12 @@ const App: React.FC = () => {
   const [quizItems, setQuizItems] = useState<NewsItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [soundOn, setSoundOn] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const savedTheme = getThemePreference();
+    if (savedTheme) return savedTheme === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const [timeLeft, setTimeLeft] = useState(GAME_CONFIG.TIMER_SECONDS);
   const [userGuess, setUserGuess] = useState<'REAL' | 'FAKE' | 'TIMEOUT' | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -241,6 +257,29 @@ const App: React.FC = () => {
   useEffect(() => {
     preloadRound();
     startMusic();
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const savedTheme = getThemePreference();
+
+    if (!savedTheme) {
+      setIsDarkMode(mediaQuery.matches);
+    }
+
+    const handleThemeChange = (event: MediaQueryListEvent) => {
+      if (!getThemePreference()) {
+        setIsDarkMode(event.matches);
+      }
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleThemeChange);
+      return () => mediaQuery.removeEventListener('change', handleThemeChange);
+    }
+
+    mediaQuery.addListener(handleThemeChange);
+    return () => mediaQuery.removeListener(handleThemeChange);
   }, []);
 
   useEffect(() => {
@@ -294,7 +333,11 @@ const App: React.FC = () => {
   };
 
   const toggleTheme = () => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode(prev => {
+      const nextIsDark = !prev;
+      setThemePreference(nextIsDark ? 'dark' : 'light');
+      return nextIsDark;
+    });
   };
 
   const startGame = async (difficulty: 'Easy' | 'Medium' | 'Hard') => {
@@ -394,6 +437,7 @@ const App: React.FC = () => {
         currentScore={gameState.score}
         highScore={Math.max(gameState.highScore, getHighScore())}
         isGameOver={gameState.status === 'GAME_OVER'}
+        isDarkMode={isDarkMode}
       />
     );
   }
@@ -407,6 +451,8 @@ const App: React.FC = () => {
   const cardBg = isDarkMode ? '#2a2a2a' : '#fff';
   const textColor = isDarkMode ? '#fff' : '#000';
   const headerBg = isDarkMode ? '#111' : '#fff';
+  const borderColor = isDarkMode ? '#fff' : '#000';
+  const mutedTextColor = isDarkMode ? '#aaa' : '#666';
 
   return (
     <div style={{ minHeight: '100vh', background: bgColor, display: 'flex', flexDirection: 'column', color: textColor }}>
@@ -421,7 +467,9 @@ const App: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '3px solid #000',
+          gap: 12,
+          flexWrap: 'wrap',
+          borderBottom: `3px solid ${borderColor}`,
         }}
       >
         <div
@@ -435,24 +483,24 @@ const App: React.FC = () => {
             justifyContent: 'center',
             transform: 'rotate(-5deg)',
             flexShrink: 0,
-            border: '2px solid #000',
+            border: `2px solid ${borderColor}`,
           }}
         >
           <span style={{ color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: 0.4 }}>F.O.R</span>
         </div>
 
-        <div style={{ display: 'flex', gap: 32, flex: 1, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 24, flex: 1, justifyContent: 'center', flexWrap: 'wrap', minWidth: 0 }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: mutedTextColor, letterSpacing: 1.2, textTransform: 'uppercase' }}>STREAK</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: textColor, lineHeight: 1 }}>{gameState.streak}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: isDarkMode ? '#aaa' : '#888', letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: mutedTextColor, letterSpacing: 1.2, textTransform: 'uppercase' }}>SCORE</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#3B7FF5', lineHeight: 1 }}>{gameState.score}</div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0, marginLeft: 'auto' }}>
           <button
             onClick={toggleSound}
             className="neo-border neo-shadow-sm neo-button"
@@ -496,6 +544,8 @@ const App: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
           background: headerBg,
           borderBottom: isDarkMode ? '1px solid #333' : '1px solid #eee',
         }}
@@ -516,7 +566,7 @@ const App: React.FC = () => {
           ROUND {currentIndex + 1}/{totalItems}
         </div>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {Array.from({ length: GAME_CONFIG.MAX_LIVES }).map((_, i) => (
             <div
               key={i}
@@ -532,7 +582,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ flex: 1, padding: '0 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ flex: 1, width: '100%', maxWidth: 680, boxSizing: 'border-box', margin: '0 auto', padding: '16px 16px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {currentItem ? (
           <GameCard
             item={currentItem}
@@ -550,16 +600,17 @@ const App: React.FC = () => {
         style={{
           padding: '16px',
           background: headerBg,
-          borderTop: '3px solid #000',
+          borderTop: `3px solid ${borderColor}`,
           display: 'flex',
           alignItems: 'center',
           gap: 16,
+          flexWrap: 'wrap',
         }}
       >
         <div
           className="neo-border"
           style={{
-            flex: 1,
+            flex: '1 1 240px',
             height: 32,
             background: cardBg,
             borderRadius: 16,
@@ -569,7 +620,7 @@ const App: React.FC = () => {
         >
           <div
             style={{
-              width: `${timerPercentage}%`,
+              width: `${Math.max(timerPercentage, 0)}%`,
               height: '100%',
               background: isUrgent ? '#E53E3E' : '#3B7FF5',
               transition: 'width 1s linear, background 0.3s',
@@ -596,8 +647,9 @@ const App: React.FC = () => {
           onClick={skipQuestion}
           className="neo-border neo-shadow-sm neo-button"
           style={{
+            flex: '1 1 160px',
             padding: '0 20px',
-            height: 40,
+            minHeight: 44,
             background: cardBg,
             color: textColor,
             fontWeight: 900,
