@@ -1,7 +1,7 @@
 import { NewsItem } from '../types';
 import { getSeenHeadlines, setSeenHeadlines } from '../utils/storage';
 
-const ENDPOINT = '/api/openrouter';
+const TRIVIA_ENDPOINT = 'https://opentdb.com/api.php';
 const MAX_RECENT_HEADLINES = 120;
 
 let cachedRound: NewsItem[] | null = null;
@@ -10,311 +10,161 @@ const recentHeadlines: string[] = getSeenHeadlines();
 const FALLBACK_ITEMS: Array<Omit<NewsItem, 'id'>> = [
   {
     headline: 'Octopuses have three hearts',
-    summary: 'Octopuses really do have three hearts: two pump blood to the gills and one pumps it through the body.',
+    summary: 'This statement is real. Octopuses have two hearts that move blood through the gills and one that moves blood through the body.',
     type: 'REAL',
     imageUrl: '',
     category: 'Science',
     difficulty: 'Easy',
-    explanation: 'Octopuses have a three-heart circulatory system that supports their oxygen needs underwater.',
-    imagePrompt: 'octopus underwater ocean marine biology',
+    explanation: 'This statement is real. Octopuses have a three-heart circulatory system.',
+    imagePrompt: 'octopus underwater marine biology',
     title: 'Octopuses have three hearts',
   } as any,
   {
-    headline: 'Scientists discovered a new deep-sea glowing predator in the Pacific',
-    summary: 'Marine researchers do regularly discover new deep-sea species, including bioluminescent predators.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Science',
-    difficulty: 'Medium',
-    explanation: 'Deep-sea exploration often reveals previously unknown bioluminescent life forms.',
-    imagePrompt: 'deep sea glowing fish ocean research',
-    title: 'Scientists discovered a new deep-sea glowing predator in the Pacific',
-  } as any,
-  {
-    headline: 'A city replaced all traffic lights with giant smiley faces',
-    summary: 'There is no credible evidence of any city replacing all traffic lights with smiley faces.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Culture',
-    difficulty: 'Easy',
-    explanation: 'Traffic systems are regulated and safety-critical, making this claim implausible and unsupported.',
-    imagePrompt: 'traffic lights city street intersection',
-    title: 'A city replaced all traffic lights with giant smiley faces',
-  } as any,
-  {
-    headline: 'NASA tested a new supersonic aircraft designed to reduce sonic booms',
-    summary: 'NASA has worked on supersonic aircraft concepts aimed at making sonic booms quieter.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Tech',
-    difficulty: 'Medium',
-    explanation: 'NASA has supported low-boom supersonic aviation research for years.',
-    imagePrompt: 'supersonic jet nasa aircraft runway',
-    title: 'NASA tested a new supersonic aircraft designed to reduce sonic booms',
-  } as any,
-  {
-    headline: 'Researchers trained pigeons to detect Wi-Fi passwords from rooftops',
-    summary: 'No legitimate research supports the claim that pigeons can detect Wi-Fi passwords.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Tech',
-    difficulty: 'Hard',
-    explanation: 'The claim mixes animal behavior with impossible cybersecurity abilities.',
-    imagePrompt: 'pigeon rooftop city wifi router',
-    title: 'Researchers trained pigeons to detect Wi-Fi passwords from rooftops',
-  } as any,
-  {
-    headline: 'A museum created a silent disco tour where visitors dance through exhibits',
-    summary: 'Museums and galleries have experimented with silent disco and audio-led tours.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Culture',
-    difficulty: 'Easy',
-    explanation: 'Interactive cultural events like silent discos are a real format used in museums and public spaces.',
-    imagePrompt: 'museum silent disco headphones art gallery',
-    title: 'A museum created a silent disco tour where visitors dance through exhibits',
-  } as any,
-  {
-    headline: 'Doctors confirmed that eating only purple foods triples memory overnight',
-    summary: 'No medical evidence supports such a dramatic overnight memory improvement from a single-color diet.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Health',
-    difficulty: 'Medium',
-    explanation: 'Nutrition can affect health over time, but this specific claim is exaggerated and unsupported.',
-    imagePrompt: 'healthy food berries vegetables nutrition',
-    title: 'Doctors confirmed that eating only purple foods triples memory overnight',
-  } as any,
-  {
-    headline: 'Engineers built a robot that can sort recycling faster than humans',
-    summary: 'AI-powered recycling robots are already used in some facilities to sort waste efficiently.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Tech',
-    difficulty: 'Easy',
-    explanation: 'Automated vision systems and robotic arms are used for high-speed waste sorting.',
-    imagePrompt: 'recycling robot factory conveyor belt',
-    title: 'Engineers built a robot that can sort recycling faster than humans',
-  } as any,
-  {
-    headline: 'A town banned Mondays after a vote to improve public happiness',
-    summary: 'No town can remove a weekday from the calendar, and there is no credible report of this happening.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Politics',
-    difficulty: 'Easy',
-    explanation: 'The claim is humorous but not plausible in any legal or administrative sense.',
-    imagePrompt: 'town hall calendar meeting',
-    title: 'A town banned Mondays after a vote to improve public happiness',
-  } as any,
-  {
-    headline: 'Researchers are studying mushrooms that can break down plastic waste',
-    summary: 'Scientists have studied fungi and enzymes that can help break down some plastics.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Science',
-    difficulty: 'Medium',
-    explanation: 'Certain fungi and microbes show promise for breaking down plastic pollution.',
-    imagePrompt: 'mushrooms forest lab plastic recycling',
-    title: 'Researchers are studying mushrooms that can break down plastic waste',
-  } as any,
-  {
-    headline: 'A startup launched perfume for laptops so emails smell more professional',
-    summary: 'There is no credible evidence of a laptop perfume product tied to email professionalism.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Culture',
-    difficulty: 'Hard',
-    explanation: 'The concept is satirical and not supported by credible reporting.',
-    imagePrompt: 'laptop desk perfume office setup',
-    title: 'A startup launched perfume for laptops so emails smell more professional',
-  } as any,
-  {
-    headline: 'Cities are painting rooftops white to reduce urban heat',
-    summary: 'Cool-roof programs are a real heat mitigation strategy in some cities.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Politics',
-    difficulty: 'Medium',
-    explanation: 'White or reflective roofs can reduce building heat absorption and urban temperatures.',
-    imagePrompt: 'city rooftops white roofs aerial urban heat',
-    title: 'Cities are painting rooftops white to reduce urban heat',
-  } as any,
-  {
-    headline: 'Researchers built solar panels that work better during light rain',
-    summary: 'Some solar research explores how weather conditions and specialized coatings affect energy capture.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Science',
-    difficulty: 'Hard',
-    explanation: 'Scientists do experiment with panel materials and coatings to improve efficiency in mixed weather conditions.',
-    imagePrompt: 'solar panels light rain rooftop clean energy',
-    title: 'Researchers built solar panels that work better during light rain',
-  } as any,
-  {
-    headline: 'A mayor required all office meetings to begin with karaoke warmups',
-    summary: 'There is no credible reporting showing a city government mandated karaoke before meetings.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Politics',
-    difficulty: 'Medium',
-    explanation: 'This sounds comedic rather than administrative and is not backed by real reporting.',
-    imagePrompt: 'city office meeting microphones conference room',
-    title: 'A mayor required all office meetings to begin with karaoke warmups',
-  } as any,
-  {
-    headline: 'Hospitals are testing AI tools that help predict patient deterioration earlier',
-    summary: 'Many hospitals and research groups are studying AI systems that flag clinical risk earlier.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Health',
-    difficulty: 'Medium',
-    explanation: 'Predictive models are already being explored to support earlier care decisions in hospitals.',
-    imagePrompt: 'hospital monitors ai dashboard doctors ward',
-    title: 'Hospitals are testing AI tools that help predict patient deterioration earlier',
-  } as any,
-  {
-    headline: 'A streaming app released a feature that changes movie endings based on your zodiac sign',
-    summary: 'No major streaming platform has a credible feature that rewrites endings based on astrology.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Culture',
-    difficulty: 'Hard',
-    explanation: 'This claim is designed to sound viral, but there is no trustworthy evidence it exists.',
-    imagePrompt: 'streaming app tv zodiac symbols couch living room',
-    title: 'A streaming app released a feature that changes movie endings based on your zodiac sign',
-  } as any,
-  {
-    headline: 'Engineers developed bricks that lock together without mortar for faster housing builds',
-    summary: 'Interlocking brick systems are a real construction approach in some projects.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Tech',
-    difficulty: 'Easy',
-    explanation: 'Modular and interlocking building methods are used to reduce labor and speed up construction.',
-    imagePrompt: 'construction workers interlocking bricks housing build',
-    title: 'Engineers developed bricks that lock together without mortar for faster housing builds',
-  } as any,
-  {
-    headline: 'A theme park hired crows to retrieve dropped phones from roller coaster tracks',
-    summary: 'No credible evidence supports the claim that a theme park trained crows for phone recovery.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Culture',
-    difficulty: 'Medium',
-    explanation: 'Training wild birds for this purpose would be unusual and is not backed by reliable reports.',
-    imagePrompt: 'theme park roller coaster maintenance crow bird',
-    title: 'A theme park hired crows to retrieve dropped phones from roller coaster tracks',
-  } as any,
-  {
-    headline: 'Scientists mapped hidden groundwater using satellites and machine learning',
-    summary: 'Remote sensing and machine learning are real tools used in groundwater and climate research.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Science',
-    difficulty: 'Hard',
-    explanation: 'Satellite data is increasingly combined with machine learning to study hard-to-observe environmental systems.',
-    imagePrompt: 'satellite earth groundwater data visualization science',
-    title: 'Scientists mapped hidden groundwater using satellites and machine learning',
-  } as any,
-  {
-    headline: 'A school district replaced detention with mandatory nap pods for every student',
-    summary: 'There is no credible evidence of a school district universally replacing detention with nap pods.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Politics',
-    difficulty: 'Easy',
-    explanation: 'The claim sounds shareable, but it is not supported by reliable reporting or policy records.',
-    imagePrompt: 'school hallway nap pod classroom futuristic education',
-    title: 'A school district replaced detention with mandatory nap pods for every student',
-  } as any,
-  {
-    headline: 'Researchers created fabric that helps cool the wearer in direct sunlight',
-    summary: 'Advanced cooling textiles and reflective fabrics are an active area of real materials research.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Health',
-    difficulty: 'Medium',
-    explanation: 'Scientists are developing wearable materials designed to reduce heat load in hot environments.',
-    imagePrompt: 'cooling fabric clothing sunlight material science',
-    title: 'Researchers created fabric that helps cool the wearer in direct sunlight',
-  } as any,
-  {
-    headline: 'A company launched shoes that automatically post your step count to your boss',
-    summary: 'There is no credible product launch showing workplace reporting shoes like this.',
-    type: 'FAKE',
-    imageUrl: '',
-    category: 'Tech',
-    difficulty: 'Medium',
-    explanation: 'This is a satirical-sounding privacy nightmare rather than a verified product announcement.',
-    imagePrompt: 'smart shoes step tracker office tech product',
-    title: 'A company launched shoes that automatically post your step count to your boss',
-  } as any,
-  {
-    headline: 'Cities are using sensors in trees to monitor heat stress during summer',
-    summary: 'Urban environmental monitoring increasingly uses sensors to track temperature and plant stress.',
-    type: 'REAL',
-    imageUrl: '',
-    category: 'Politics',
-    difficulty: 'Hard',
-    explanation: 'Smart-city and environmental programs do deploy sensors to understand local heat patterns.',
-    imagePrompt: 'city trees sensors summer heat urban monitoring',
-    title: 'Cities are using sensors in trees to monitor heat stress during summer',
-  } as any,
-  {
-    headline: 'Researchers discovered that humming for 30 seconds fully charges your phone battery',
-    summary: 'There is no scientific basis for charging a phone battery by humming into it.',
+    headline: 'Humans can breathe normally in space without a suit',
+    summary: 'This statement is fake. Space is a near-vacuum, and humans need pressure and oxygen to survive there.',
     type: 'FAKE',
     imageUrl: '',
     category: 'Science',
     difficulty: 'Easy',
-    explanation: 'The energy involved is nowhere near what a phone battery needs, and the claim is not real.',
-    imagePrompt: 'phone battery charging microphone humming sound waves',
-    title: 'Researchers discovered that humming for 30 seconds fully charges your phone battery',
+    explanation: 'This statement is fake. Astronauts need spacesuits or pressurized spacecraft.',
+    imagePrompt: 'astronaut spacesuit outer space',
+    title: 'Humans can breathe normally in space without a suit',
   } as any,
   {
-    headline: 'Doctors are studying whether virtual reality can reduce pain during procedures',
-    summary: 'Virtual reality has been studied as a pain and anxiety management tool in medical settings.',
+    headline: 'The Great Wall of China was built in a single weekend',
+    summary: 'This statement is fake. The wall system was built, rebuilt, and expanded across many centuries.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Culture',
+    difficulty: 'Easy',
+    explanation: 'This statement is fake. The Great Wall was a long-term construction effort across multiple dynasties.',
+    imagePrompt: 'great wall of china mountain landscape',
+    title: 'The Great Wall of China was built in a single weekend',
+  } as any,
+  {
+    headline: 'Lightning can strike the same place more than once',
+    summary: 'This statement is real. Tall buildings, towers, and exposed objects can be struck repeatedly.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Science',
+    difficulty: 'Easy',
+    explanation: 'This statement is real. The idea that lightning never strikes twice is a myth.',
+    imagePrompt: 'lightning storm tall skyscraper',
+    title: 'Lightning can strike the same place more than once',
+  } as any,
+  {
+    headline: 'A computer virus can spread through a glass of water',
+    summary: 'This statement is fake. Computer viruses are malicious code, not biological germs in drinking water.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Tech',
+    difficulty: 'Easy',
+    explanation: 'This statement is fake. Digital malware spreads through computer systems and networks.',
+    imagePrompt: 'computer virus warning screen glass water desk',
+    title: 'A computer virus can spread through a glass of water',
+  } as any,
+  {
+    headline: 'The human heart has four chambers',
+    summary: 'This statement is real. The heart has two atria and two ventricles.',
     type: 'REAL',
     imageUrl: '',
     category: 'Health',
     difficulty: 'Easy',
-    explanation: 'VR is already being explored to distract patients and reduce distress during some treatments.',
-    imagePrompt: 'hospital patient virtual reality headset doctor care',
-    title: 'Doctors are studying whether virtual reality can reduce pain during procedures',
+    explanation: 'This statement is real. A human heart has four chambers.',
+    imagePrompt: 'human heart medical illustration doctor',
+    title: 'The human heart has four chambers',
   } as any,
   {
-    headline: 'A coastal town replaced police sirens with whale songs to improve community calm',
-    summary: 'No credible public safety program has replaced police sirens with whale songs.',
+    headline: 'Sound travels faster in air than in water',
+    summary: 'This statement is fake. Sound usually travels faster in water than in air.',
     type: 'FAKE',
     imageUrl: '',
-    category: 'Culture',
-    difficulty: 'Hard',
-    explanation: 'This sounds whimsical, but there is no trustworthy evidence that such a change happened.',
-    imagePrompt: 'police siren coastal town whale ocean street',
-    title: 'A coastal town replaced police sirens with whale songs to improve community calm',
+    category: 'Science',
+    difficulty: 'Medium',
+    explanation: 'This statement is fake. Sound waves move faster through water because its particles are closer together.',
+    imagePrompt: 'sound wave underwater ocean science',
+    title: 'Sound travels faster in air than in water',
   } as any,
   {
-    headline: 'Scientists designed concrete that stores heat to improve building efficiency',
-    summary: 'Researchers are exploring thermal-storage building materials, including specialized concrete.',
-    type: 'REAL',
+    headline: 'The first programmable computers were the size of modern smartphones',
+    summary: 'This statement is fake. Early programmable computers were room-sized machines.',
+    type: 'FAKE',
     imageUrl: '',
     category: 'Tech',
-    difficulty: 'Hard',
-    explanation: 'Some construction materials are being engineered to better manage heat and energy usage.',
-    imagePrompt: 'concrete building energy efficiency modern architecture',
-    title: 'Scientists designed concrete that stores heat to improve building efficiency',
+    difficulty: 'Easy',
+    explanation: 'This statement is fake. Early computers used large cabinets, cables, tubes, and panels.',
+    imagePrompt: 'vintage room sized computer old technology',
+    title: 'The first programmable computers were the size of modern smartphones',
+  } as any,
+  {
+    headline: 'Some mushrooms can glow in the dark',
+    summary: 'This statement is real. Some fungi are bioluminescent and can produce visible light.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Science',
+    difficulty: 'Medium',
+    explanation: 'This statement is real. Bioluminescent fungi exist in nature.',
+    imagePrompt: 'glowing mushrooms dark forest bioluminescent fungi',
+    title: 'Some mushrooms can glow in the dark',
+  } as any,
+  {
+    headline: 'Every country in the world uses the exact same currency',
+    summary: 'This statement is fake. Countries and regions use many different currencies.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Politics',
+    difficulty: 'Easy',
+    explanation: 'This statement is fake. Examples include the dollar, euro, yen, rupee, pound, and many more.',
+    imagePrompt: 'international money currencies banknotes coins',
+    title: 'Every country in the world uses the exact same currency',
+  } as any,
+  {
+    headline: 'Vaccines train the immune system to recognize specific threats',
+    summary: 'This statement is real. Vaccines help the immune system prepare defenses against certain diseases.',
+    type: 'REAL',
+    imageUrl: '',
+    category: 'Health',
+    difficulty: 'Medium',
+    explanation: 'This statement is real. Vaccines work by preparing immune memory.',
+    imagePrompt: 'vaccine syringe immune system medical clinic',
+    title: 'Vaccines train the immune system to recognize specific threats',
+  } as any,
+  {
+    headline: 'The Moon produces its own sunlight like a small star',
+    summary: 'This statement is fake. The Moon appears bright because it reflects sunlight.',
+    type: 'FAKE',
+    imageUrl: '',
+    category: 'Science',
+    difficulty: 'Easy',
+    explanation: 'This statement is fake. The Moon reflects light from the Sun.',
+    imagePrompt: 'moon night sky reflected sunlight',
+    title: 'The Moon produces its own sunlight like a small star',
   } as any,
 ];
 
-async function askLLM(payload: any) {
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+async function fetchTriviaQuestions(count: number) {
+  const url = new URL(TRIVIA_ENDPOINT);
+  url.searchParams.set('amount', String(count));
+  url.searchParams.set('type', 'boolean');
 
-  return res.json();
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error('Trivia request failed');
+
+  const data = await res.json();
+  if (!Array.isArray(data?.results) || data.response_code !== 0) {
+    throw new Error('No trivia results');
+  }
+
+  return data.results;
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
 }
 
 function normalizeHeadline(headline: string) {
@@ -336,118 +186,110 @@ function rememberHeadlines(items: NewsItem[]) {
 }
 
 function isRecentHeadline(headline: string) {
-  const normalized = normalizeHeadline(headline);
-  return recentHeadlines.includes(normalized);
+  return recentHeadlines.includes(normalizeHeadline(headline));
 }
 
 function buildImageUrl(rawPrompt: string, category?: string) {
   const prompt = encodeURIComponent(
-    `${rawPrompt || 'news story'} ${category || ''} photo`.trim().replace(/\s+/g, ' ')
+    `${rawPrompt || 'trivia statement'} ${category || ''} photo`.trim().replace(/\s+/g, ' ')
   );
 
   return `https://image.pollinations.ai/prompt/${prompt}?width=900&height=600&nologo=true&model=flux`;
 }
 
-function safeParse(raw: string) {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    const match = raw.match(/\[\s*{[\s\S]*}\s*\]/);
-    if (match) return JSON.parse(match[0]);
-    return null;
-  }
+function getGameCategory(triviaCategory?: string): NewsItem['category'] {
+  const category = (triviaCategory || '').toLowerCase();
+
+  if (category.includes('science') || category.includes('nature') || category.includes('math')) return 'Science';
+  if (category.includes('computer') || category.includes('gadget')) return 'Tech';
+  if (category.includes('politics') || category.includes('history') || category.includes('geography')) return 'Politics';
+  if (category.includes('animal') || category.includes('sport') || category.includes('film') || category.includes('music') || category.includes('book')) return 'Culture';
+  return 'Culture';
 }
 
-function mapToNewsItem(item: any, index: number): NewsItem {
-  const headline = item.headline || item.title || 'No headline';
-  const explanation = item.explanation || item.summary || 'This is a viral news story.';
-  const category = ['Politics', 'Tech', 'Science', 'Culture', 'Health'].includes(item.category)
-    ? item.category
-    : 'Science';
-  const difficulty = ['Easy', 'Medium', 'Hard'].includes(item.difficulty)
-    ? item.difficulty
-    : 'Medium';
-  const imagePrompt = item.imagePrompt || `${headline} ${category}`;
+function getGameDifficulty(triviaDifficulty?: string): NewsItem['difficulty'] {
+  if (triviaDifficulty === 'easy') return 'Easy';
+  if (triviaDifficulty === 'hard') return 'Hard';
+  return 'Medium';
+}
+
+function mapTriviaToNewsItem(item: any, index: number): NewsItem {
+  const statement = decodeHtml(String(item.question || 'No statement')).replace(/\s+/g, ' ').trim();
+  const isReal = item.correct_answer === 'True';
+  const category = getGameCategory(item.category);
+  const difficulty = getGameDifficulty(item.difficulty);
+  const imagePrompt = `${statement} trivia quiz ${category}`;
+  const truthLabel = isReal ? 'real' : 'fake';
+  const summary = `This statement is ${truthLabel}. Open Trivia Database lists the correct true/false answer as ${item.correct_answer}.`;
 
   return {
     id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
-    title: headline,
-    headline,
-    type: item.type === 'FAKE' ? 'FAKE' : 'REAL',
+    title: statement,
+    headline: statement,
+    type: isReal ? 'REAL' : 'FAKE',
     imageUrl: buildImageUrl(imagePrompt, category),
-    summary: explanation,
-    explanation,
+    summary,
+    explanation: summary,
     category,
     difficulty,
+    source: 'Open Trivia Database',
     imagePrompt,
+  };
+}
+
+function mapFallbackToNewsItem(item: Omit<NewsItem, 'id'>, index: number): NewsItem {
+  const headline = item.headline || item.title || 'No statement';
+  const category = item.category || 'Culture';
+
+  return {
+    ...item,
+    id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+    title: headline,
+    headline,
+    imageUrl: buildImageUrl(item.imagePrompt || headline, category),
+    source: 'Fallback question bank',
   } as NewsItem;
+}
+
+function uniqueOnly(items: NewsItem[]) {
+  const seenThisBatch = new Set<string>();
+
+  return items.filter(item => {
+    const normalized = normalizeHeadline(item.headline);
+    if (!normalized || isRecentHeadline(item.headline) || seenThisBatch.has(normalized)) {
+      return false;
+    }
+
+    seenThisBatch.add(normalized);
+    return true;
+  });
 }
 
 function getFallbackRound(count: number): NewsItem[] {
   const shuffled = [...FALLBACK_ITEMS].sort(() => Math.random() - 0.5);
-  const unique = shuffled.filter(item => !isRecentHeadline(item.headline)).slice(0, count);
-  const source = unique.length >= count ? unique : shuffled.slice(0, count);
-  const mapped = source.map((item, index) => mapToNewsItem(item, index));
+  const unique = shuffled
+    .filter(item => !isRecentHeadline(item.headline))
+    .slice(0, count)
+    .map((item, index) => mapFallbackToNewsItem(item, index));
+
+  const mapped = unique.length >= count
+    ? unique
+    : shuffled.slice(0, count).map((item, index) => mapFallbackToNewsItem(item, index));
+
   rememberHeadlines(mapped);
   return mapped;
 }
 
 async function requestFreshRound(count: number): Promise<NewsItem[]> {
-  const recentBlock = recentHeadlines.slice(0, 40).join(' | ');
-  const requestedCount = Math.max(count + 4, count * 2);
+  const requestedCount = Math.min(50, Math.max(count + 8, count * 3));
+  const triviaItems = await fetchTriviaQuestions(requestedCount);
+  const uniqueItems = uniqueOnly(triviaItems.map(mapTriviaToNewsItem));
 
-  const res = await askLLM({
-    messages: [
-      {
-        role: 'system',
-        content:
-          'Return ONLY a JSON array. Create diverse viral-news quiz items across politics, tech, science, culture, and health. Mix real and fake items. Avoid repeating previous topics or wording. Each item must include headline, type, category, difficulty, explanation, and imagePrompt. Keep explanations short, factual, and educational. Every headline should be clearly different from the others in topic and wording.',
-      },
-      {
-        role: 'user',
-        content: `Generate ${requestedCount} unique viral news quiz items in JSON format:
-[
-  {
-    "headline": "...",
-    "type": "REAL" or "FAKE",
-    "category": "Politics" | "Tech" | "Science" | "Culture" | "Health",
-    "difficulty": "Easy" | "Medium" | "Hard",
-    "explanation": "1-2 sentence truth summary for players",
-    "imagePrompt": "short visual prompt for a contextual news-style image"
+  if (uniqueItems.length < count) {
+    throw new Error('Not enough unique trivia statements');
   }
-]
 
-Rules:
-- Do not reuse or closely paraphrase any recent headlines.
-- Do not produce duplicates within this same response.
-- Make the set feel varied in subject, tone, and geography.
-- Avoid Elon Musk, octopus hearts, cats barking, and other overused examples unless absolutely necessary.
-- Recent headlines to avoid: ${recentBlock || 'none'}`,
-      },
-    ],
-  });
-
-  const content = res?.choices?.[0]?.message?.content;
-  if (!content) throw new Error('No content');
-
-  const parsed = safeParse(content);
-  if (!parsed || !Array.isArray(parsed)) throw new Error('Parse failed');
-
-  const seenThisBatch = new Set<string>();
-  const formatted = parsed
-    .map((item: any, index: number) => mapToNewsItem(item, index))
-    .filter((item: NewsItem) => {
-      const normalized = normalizeHeadline(item.headline);
-      if (!normalized || isRecentHeadline(item.headline) || seenThisBatch.has(normalized)) {
-        return false;
-      }
-      seenThisBatch.add(normalized);
-      return true;
-    });
-
-  if (formatted.length < count) throw new Error('Not enough unique generated items');
-
-  const selected = formatted.slice(0, count);
+  const selected = uniqueItems.slice(0, count);
   rememberHeadlines(selected);
   return selected;
 }
