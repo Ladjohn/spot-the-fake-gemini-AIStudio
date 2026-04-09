@@ -357,7 +357,7 @@ const ScoreBoard: React.FC<{
         </div>
 
         <button
-          className="neo-button"
+          className="neo-button score-link-button"
           onClick={() => {
             buzz(12);
             onChangeDifficulty();
