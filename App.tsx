@@ -314,7 +314,7 @@ const ScoreBoard: React.FC<{
             padding: '22px 16px',
             margin: '0 auto 24px',
             borderRadius: 8,
-            transform: 'rotate(1.5deg)',
+            transform: 'none',
             border: '3px solid #000',
           }}
         >
